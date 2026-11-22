@@ -2592,11 +2592,34 @@ legend {
 .header .brand {
   max-width: min(45vw, 300px);
 }
-.header .brand > span {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.header .business-logo {
+  width: auto;
+  height: 88px;
+  max-width: min(220px, 30vw);
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+}
+.footer-logo {
+  width: 64px;
+  height: 64px;
+}
+@media (max-width: 800px) {
+  .header .business-logo {
+    height: 70px;
+    max-width: 30vw;
+  }
+}
+@media (max-width: 560px) {
+  .header .business-logo {
+    height: 62px;
+    max-width: 34vw;
+  }
+  .footer-logo {
+    width: 56px;
+    height: 56px;
+  }
 }
 .marked-date {
   position: relative;
@@ -2748,10 +2771,6 @@ legend {
 @media (max-width: 560px) {
   .nav {
     top: 73px;
-  }
-  .business-logo {
-    width: 52px;
-    height: 52px;
   }
   .gallery-dialog {
     padding: 14px;

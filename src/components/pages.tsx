@@ -373,6 +373,16 @@ export function Customization() {
                   Connect on Instagram
                 </a>
               )}
+              {settings.facebook && (
+                <a
+                  className="btn outline"
+                  href={settings.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FacebookIcon size={16} /> Connect on Facebook
+                </a>
+              )}
             </div>
           ) : (
             <form

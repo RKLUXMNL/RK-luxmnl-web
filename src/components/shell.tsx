@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { Photo } from "./ui";
+import { FacebookIcon } from "./facebook-icon";
 import { useStore } from "./store";
 const links = [
   ["Home", "/"],
@@ -48,10 +49,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ) : (
             <Diamond size={25} />
           )}
-          <span>
-            {settings.businessName.replace(/ Diamond Jewelry$/i, "")}
-            <small>DIAMOND JEWELRY</small>
-          </span>
         </Link>
         <nav className={open ? "nav open" : "nav"} aria-label="Main navigation">
           {links.map(([label, href]) => (
@@ -95,8 +92,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <footer>
         <div className="footer-grid">
           <div>
-            <Link className="brand" href="/">
-              {settings.businessName}
+            <Link
+              className="brand footer-brand"
+              href="/"
+              aria-label={`${settings.businessName} home`}
+            >
+              {settings.logo ? (
+                <Photo
+                  className="business-logo footer-logo"
+                  src={settings.logo}
+                  alt={settings.businessName}
+                />
+              ) : (
+                <Diamond size={25} />
+              )}
             </Link>
             <p>
               Fine jewelry. Personal stories.
@@ -110,6 +119,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
             >
               <Instagram size={20} />
             </a>
+            {facebook && (
+              <a
+                href={facebook}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+              >
+                <FacebookIcon size={20} />
+              </a>
+            )}
           </div>
           <div>
             <h4>Explore</h4>
