@@ -111,6 +111,76 @@ function InlineInquiry({ product }: { product: Product }) {
     </form>
   );
 }
+function LayawayCalculator({ price }: { price: number | null }) {
+  const [downPaymentRate, setDownPaymentRate] = useState(30);
+  const [months, setMonths] = useState(6);
+  if (price === null)
+    return (
+      <p className="small">
+        Layaway computation is available once this item’s price is confirmed.
+      </p>
+    );
+  const rate = Math.min(100, Math.max(0, Number(downPaymentRate) || 0));
+  const downPayment = (price * rate) / 100;
+  const balance = price - downPayment;
+  const monthly = balance / months;
+  return (
+    <div className="layaway-calculator">
+      <p className="small layaway-note">
+        The listed price stays the same. This is a sample of how payments can be
+        split; final terms are confirmed when you inquire.
+      </p>
+      <div className="layaway-controls">
+        <label>
+          Down payment (%)
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={5}
+            value={downPaymentRate}
+            onChange={(event) => setDownPaymentRate(Number(event.target.value))}
+          />
+        </label>
+        <label>
+          Payment term
+          <select
+            value={months}
+            onChange={(event) => setMonths(Number(event.target.value))}
+          >
+            {[3, 6, 12].map((option) => (
+              <option key={option} value={option}>
+                {option} months
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="layaway-result">
+        <div>
+          <span>Item price</span>
+          <strong>{money(price)}</strong>
+        </div>
+        <div>
+          <span>Down payment ({rate}%)</span>
+          <strong>{money(downPayment)}</strong>
+        </div>
+        <div>
+          <span>Remaining balance</span>
+          <strong>{money(balance)}</strong>
+        </div>
+        <div className="layaway-monthly">
+          <span>Monthly payment for {months} months</span>
+          <strong>{money(monthly)}</strong>
+        </div>
+      </div>
+      <p className="small layaway-formula">
+        Computation: monthly payment = (item price − down payment) ÷ number of
+        months.
+      </p>
+    </div>
+  );
+}
 const labels: Record<string, string> = {
   brand: "Brand",
   color: "Color",
@@ -286,11 +356,12 @@ export function ProductDetails({
             <Accordion title="Ask About This Item" lazy>
               <InlineInquiry product={p} />
             </Accordion>
-            {policies.installment && (
-              <Accordion title="Installment / Layaway Options">
+            <Accordion title="Layaway Computation">
+              {policies.installment && (
                 <p className="preserve-lines">{policies.installment}</p>
-              </Accordion>
-            )}
+              )}
+              <LayawayCalculator price={p.price} />
+            </Accordion>
           </div>
         </div>
       </section>
