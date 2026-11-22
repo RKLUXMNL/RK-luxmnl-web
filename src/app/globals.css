@@ -2081,9 +2081,6 @@ td {
   .footer-grid {
     gap: 14px 12px;
   }
-  .footer-grid > div:last-child {
-    grid-column: 1/-1;
-  }
   .footer-grid > div:first-child p {
     margin: 5px 0;
   }
