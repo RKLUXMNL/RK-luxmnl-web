@@ -158,6 +158,7 @@
     height: 80px;
   }
   .gallery-playback-controls {
+    flex-wrap: wrap;
     gap: 8px;
   }
   .gallery-video-expand {

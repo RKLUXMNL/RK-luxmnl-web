@@ -2642,6 +2642,26 @@ legend {
     width: 88px;
     height: 88px;
   }
+  .product-detail {
+    gap: 20px;
+    padding-top: 25px;
+  }
+  .detail-copy h1 {
+    font-size: 36px;
+  }
+  .detail-price {
+    font-size: 18px;
+  }
+  .breadcrumb {
+    line-height: 1.6;
+  }
+  .product-specs > div {
+    grid-template-columns: minmax(82px, auto) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .gallery-help {
+    line-height: 1.6;
+  }
 }
 .marked-date {
   position: relative;
@@ -2801,7 +2821,8 @@ legend {
     font-size: 10px;
   }
   .product-specs > div {
-    grid-template-columns: 105px 1fr;
+    grid-template-columns: minmax(82px, auto) minmax(0, 1fr);
+    gap: 10px;
   }
   .live-session {
     padding: 18px;
