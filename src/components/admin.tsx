@@ -1442,6 +1442,7 @@ export function Admin() {
                     location: fields.location,
                     meetup: fields.meetup,
                     logo: logo ?? fields.logo,
+                    footerLogo: fields.footerLogo,
                     policies: Object.fromEntries(
                       policyFields.map(([key]) => [
                         key,
@@ -1464,7 +1465,8 @@ export function Admin() {
                   ["mobile", "Public contact number (optional)"],
                   ["location", "Viewing location"],
                   ["meetup", "Meetup information"],
-                  ["logo", "Logo URL (optional)"],
+                  ["logo", "Header logo URL (optional)"],
+                  ["footerLogo", "Footer logo URL (optional)"],
                 ].map(([key, label]) => (
                   <label key={key}>
                     {label}

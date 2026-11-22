@@ -24,6 +24,9 @@ export const settingsSchema = z.object({
   location: z.string().max(500),
   meetup: z.string().max(500),
   logo: z.union([safeUrl, z.string().regex(/^\/api\/media\/[a-zA-Z0-9_-]+$/)]),
+  footerLogo: z
+    .union([safeUrl, z.string().regex(/^\/api\/media\/[a-zA-Z0-9_-]+$/)])
+    .optional(),
   policies: policySchema,
 });
 export type Settings = z.infer<typeof settingsSchema>;
@@ -36,6 +39,7 @@ export const defaults: Settings = {
   location: "Infina Towers, Quezon City",
   meetup: "Metro Manila meetups subject to arrangement",
   logo: "",
+  footerLogo: "",
   policies: {
     delivery:
       "Delivery and pickup arrangements are subject to confirmation. Contact us to arrange the most convenient option.",

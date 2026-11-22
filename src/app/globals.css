@@ -761,25 +761,25 @@ small,
   margin-top: 27px;
 }
 footer {
-  padding: 34px 6% 0;
+  padding: 20px 6% 0;
   background: #f7ecde;
   border-top: 1px solid var(--border);
 }
 .footer-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1.4fr;
-  gap: 26px;
+  gap: 18px;
 }
 .footer-grid p {
   font-size: 10px;
-  margin: 10px 0;
+  margin: 6px 0;
 }
 .footer-grid > div > a:not(.brand) {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  margin: 5px 0;
+  margin: 2px 0;
 }
 .footer-grid .brand {
   font-size: 28px;
@@ -788,8 +788,8 @@ footer {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 12px 0;
-  margin-top: 18px;
+  padding: 8px 0;
+  margin-top: 8px;
   border-top: 1px solid var(--border);
   font-size: 8px;
   color: #8a7763;
@@ -2076,22 +2076,21 @@ td {
     font-size: 11px;
   }
   footer {
-    padding: 26px 6% 0;
+    padding: 18px 6% 0;
   }
   .footer-grid {
-    gap: 18px 14px;
+    gap: 14px 12px;
   }
-  .footer-grid > div:first-child,
   .footer-grid > div:last-child {
     grid-column: 1/-1;
   }
   .footer-grid > div:first-child p {
-    margin: 8px 0;
+    margin: 5px 0;
   }
   .footer-bottom {
     font-size: 7px;
-    margin-top: 12px;
-    padding: 10px 0;
+    margin-top: 8px;
+    padding: 7px 0;
     flex-direction: column;
     gap: 5px;
   }
@@ -2658,7 +2657,7 @@ legend {
 }
 .header .brand {
   max-width: min(45vw, 300px);
-  margin-left: 20px;
+  margin-left: 36px;
 }
 .header .business-logo {
   width: auto;
@@ -2671,12 +2670,12 @@ legend {
   line-height: 0;
 }
 .footer-logo {
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
 }
 @media (max-width: 800px) {
   .header .brand {
-    margin-left: 12px;
+    margin-left: 22px;
   }
   .header .business-logo {
     height: 70px;
@@ -2688,15 +2687,15 @@ legend {
 }
 @media (max-width: 560px) {
   .header .brand {
-    margin-left: 8px;
+    margin-left: 14px;
   }
   .header .business-logo {
     height: 62px;
     max-width: 34vw;
   }
   .footer-logo {
-    width: 88px;
-    height: 88px;
+    width: 110px;
+    height: 110px;
   }
   .product-detail {
     gap: 20px;

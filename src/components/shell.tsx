@@ -29,6 +29,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { wishlist, error, settings } = useStore();
   const { instagram, facebook } = settings;
+  const footerLogo = settings.footerLogo || settings.logo;
   return (
     <>
       <a className="skip" href="#main">
@@ -97,10 +98,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               href="/"
               aria-label={`${settings.businessName} home`}
             >
-              {settings.logo ? (
+              {footerLogo ? (
                 <Photo
                   className="business-logo footer-logo"
-                  src={settings.logo}
+                  src={footerLogo}
                   alt={settings.businessName}
                 />
               ) : (
