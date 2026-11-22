@@ -2295,8 +2295,8 @@ td {
   overflow-wrap: anywhere;
 }
 .business-logo {
-  width: 45px;
-  height: 45px;
+  width: 68px;
+  height: 68px;
   object-fit: contain;
 }
 .price-filter {
@@ -2748,6 +2748,10 @@ legend {
 @media (max-width: 560px) {
   .nav {
     top: 73px;
+  }
+  .business-logo {
+    width: 52px;
+    height: 52px;
   }
   .gallery-dialog {
     padding: 14px;
