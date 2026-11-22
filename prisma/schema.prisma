@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  active       Boolean        @default(true)
+  sessions     AdminSession[]
+  createdAt    DateTime       @default(now())
+}
+
+model AdminSession {
+  id        String    @id
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(1)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id                  String         @id @default(cuid())
+  slug                String         @unique
+  name                String
+  description         String         @default("")
+  categoryId          String
+  category            Category       @relation(fields: [categoryId], references: [id])
+  price               Decimal?       @db.Decimal(14, 2)
+  availability        String         @default("Available")
+  published           Boolean        @default(false)
+  isDemo              Boolean        @default(false)
+  ownerConfirmed      Boolean        @default(false)
+  archived            Boolean        @default(false)
+  specifications      Json           @default("{}")
+  authenticityEnabled Boolean        @default(false)
+  authenticityText    String         @default("")
+  certificateType     String         @default("")
+  certificateNumber   String         @default("")
+  certificateIssuer   String         @default("")
+  certificateId       String?
+  certificate         MediaAsset?    @relation("Certificate", fields: [certificateId], references: [id], onDelete: SetNull)
+  policies            Json           @default("{}")
+  media               ProductMedia[]
+  inquiries           Inquiry[]
+  appointments        Appointment[]
+  liveProducts        LiveProduct[]
+  reelProducts        ReelProduct[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([published, archived, categoryId])
+  @@index([price])
+  @@index([certificateId])
+  @@index([createdAt])
+}
+
+model ProductMedia {
+  id        String     @id @default(cuid())
+  productId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  assetId   String
+  asset     MediaAsset @relation(fields: [assetId], references: [id])
+  position  Int        @default(0)
+
+  @@unique([productId, assetId])
+  @@index([productId, position])
+  @@index([assetId])
+}
+
+model MediaAsset {
+  id              String               @id @default(cuid())
+  provider        String
+  kind            String
+  purpose         String
+  key             String               @unique
+  filename        String
+  mime            String
+  bytes           BigInt
+  state           String               @default("uploading")
+  duration        Float?
+  error           String?
+  authorized      Boolean              @default(false)
+  uploadTokenHash String?
+  uploadExpiresAt DateTime?
+  displayKey      String?
+  thumbnailKey    String?
+  width           Int?
+  height          Int?
+  createdAt       DateTime             @default(now())
+  productMedia    ProductMedia[]
+  certificates    Product[]            @relation("Certificate")
+  references      CustomReference[]
+  sessions        LiveSellingSession[]
+  reels           Reel[]
+
+  @@index([state, createdAt])
+}
+
+model Inquiry {
+  id            String   @id @default(cuid())
+  submissionKey String   @unique
+  payloadHash   String
+  name          String
+  email         String   @default("")
+  mobile        String   @default("")
+  platform      String
+  message       String
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  status        String   @default("New")
+  createdAt     DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([productId])
+}
+
+model AppointmentSlot {
+  id           String        @id @default(cuid())
+  startsAt     DateTime      @unique @db.Timestamptz(3)
+  capacity     Int           @default(1)
+  enabled      Boolean       @default(true)
+  appointments Appointment[]
+}
+
+model BlockedDate {
+  date   String @id
+  reason String @default("")
+}
+
+model Appointment {
+  id            String          @id @default(cuid())
+  submissionKey String          @unique
+  payloadHash   String
+  name          String
+  email         String
+  mobile        String
+  type          String
+  location      String
+  message       String          @default("")
+  slotId        String
+  slot          AppointmentSlot @relation(fields: [slotId], references: [id])
+  productId     String?
+  product       Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  status        String          @default("Pending")
+  createdAt     DateTime        @default(now())
+
+  @@index([slotId, status])
+  @@index([status, createdAt])
+}
+
+model CustomizationRequest {
+  id            String            @id @default(cuid())
+  submissionKey String            @unique
+  payloadHash   String
+  name          String
+  email         String
+  mobile        String
+  jewelry       String
+  metal         String            @default("")
+  gemstone      String            @default("")
+  budget        String            @default("")
+  message       String
+  status        String            @default("New")
+  references    CustomReference[]
+  createdAt     DateTime          @default(now())
+
+  @@index([status, createdAt])
+}
+
+model CustomReference {
+  requestId String
+  request   CustomizationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  assetId   String
+  asset     MediaAsset           @relation(fields: [assetId], references: [id])
+
+  @@id([requestId, assetId])
+  @@index([assetId])
+}
+
+model LiveSellingSession {
+  id           String        @id @default(cuid())
+  title        String
+  startsAt     DateTime      @db.Timestamptz(3)
+  description  String        @default("")
+  status       String        @default("Scheduled")
+  instagramUrl String        @default("")
+  facebookUrl  String        @default("")
+  published    Boolean       @default(false)
+  replayId     String?
+  replay       MediaAsset?   @relation(fields: [replayId], references: [id], onDelete: SetNull)
+  products     LiveProduct[]
+  createdAt    DateTime      @default(now())
+
+  @@index([published, startsAt])
+}
+
+model LiveProduct {
+  sessionId String
+  session   LiveSellingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  timestamp Int?
+  position  Int                @default(0)
+
+  @@id([sessionId, productId])
+  @@index([productId])
+}
+
+model Reel {
+  id               String        @id @default(cuid())
+  title            String
+  description      String        @default("")
+  instagramUrl     String        @default("")
+  published        Boolean       @default(false)
+  downloadsEnabled Boolean       @default(false)
+  assetId          String?
+  asset            MediaAsset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  products         ReelProduct[]
+  createdAt        DateTime      @default(now())
+
+  @@index([published, createdAt])
+}
+
+model ReelProduct {
+  reelId    String
+  reel      Reel    @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([reelId, productId])
+  @@index([productId])
+}
+
+model WebsiteSettings {
+  id        String   @id @default("main")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
