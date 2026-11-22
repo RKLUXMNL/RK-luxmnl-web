@@ -761,25 +761,25 @@ small,
   margin-top: 27px;
 }
 footer {
-  padding: 65px 6% 0;
+  padding: 34px 6% 0;
   background: #f7ecde;
   border-top: 1px solid var(--border);
 }
 .footer-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1.4fr;
-  gap: 45px;
+  gap: 26px;
 }
 .footer-grid p {
   font-size: 10px;
-  margin: 18px 0;
+  margin: 10px 0;
 }
 .footer-grid > div > a:not(.brand) {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 10px;
-  margin: 8px 0;
+  margin: 5px 0;
 }
 .footer-grid .brand {
   font-size: 28px;
@@ -788,8 +788,8 @@ footer {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 20px 0;
-  margin-top: 45px;
+  padding: 12px 0;
+  margin-top: 18px;
   border-top: 1px solid var(--border);
   font-size: 8px;
   color: #8a7763;
@@ -2071,22 +2071,22 @@ td {
     font-size: 11px;
   }
   footer {
-    padding: 45px 6% 0;
+    padding: 26px 6% 0;
   }
   .footer-grid {
-    gap: 30px 20px;
+    gap: 18px 14px;
   }
   .footer-grid > div:first-child,
   .footer-grid > div:last-child {
     grid-column: 1/-1;
   }
   .footer-grid > div:first-child p {
-    margin: 15px 0;
+    margin: 8px 0;
   }
   .footer-bottom {
     font-size: 7px;
-    margin-top: 30px;
-    padding: 17px 0;
+    margin-top: 12px;
+    padding: 10px 0;
     flex-direction: column;
     gap: 5px;
   }
@@ -2601,10 +2601,11 @@ legend {
 .footer-brand {
   display: inline-flex;
   align-items: center;
+  line-height: 0;
 }
 .footer-logo {
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
 }
 @media (max-width: 800px) {
   .header .brand {
@@ -2613,6 +2614,9 @@ legend {
   .header .business-logo {
     height: 70px;
     max-width: 30vw;
+  }
+  .footer-grid {
+    gap: 22px 30px;
   }
 }
 @media (max-width: 560px) {
@@ -2624,8 +2628,8 @@ legend {
     max-width: 34vw;
   }
   .footer-logo {
-    width: 72px;
-    height: 72px;
+    width: 88px;
+    height: 88px;
   }
 }
 .marked-date {
