@@ -76,6 +76,7 @@
 }
 .product-gallery .thumbnails {
   overflow-x: auto;
+  min-width: 0;
   max-width: 100%;
   padding: 3px;
   flex-wrap: nowrap;
