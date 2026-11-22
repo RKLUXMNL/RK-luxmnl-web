@@ -17,9 +17,14 @@ async function main() {
     throw Error(
       "Set a valid ADMIN_EMAIL and ADMIN_PASSWORD (14–200 characters) in your environment.",
     );
+  const first = (await db.adminUser.count()) === 0;
   await db.adminUser.upsert({
     where: { email },
-    create: { email, passwordHash: await passwordHash(password) },
+    create: {
+      email,
+      passwordHash: await passwordHash(password),
+      role: first ? "OWNER" : "ADMIN",
+    },
     update: { passwordHash: await passwordHash(password), active: true },
   });
   await db.adminSession.deleteMany({ where: { user: { email } } });

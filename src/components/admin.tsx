@@ -21,6 +21,14 @@ type Asset = {
   error?: string;
 };
 type Category = { id: string; name: string; slug: string };
+type AdminRole = "OWNER" | "ADMIN";
+type AdminRow = {
+  id: string;
+  email: string;
+  role: AdminRole;
+  active: boolean;
+  createdAt: string;
+};
 type AdminProduct = {
   isDemo: boolean;
   id: string;
@@ -99,6 +107,8 @@ type Data = {
   slots: { id: string; startsAt: string; capacity: number; enabled: boolean }[];
   blocked: { date: string; reason: string }[];
   counts: number[];
+  viewer: { id: string; email: string; role: AdminRole };
+  admins: AdminRow[];
 };
 const policyFields = [
   ["viewing", "Viewing & Pickup Information"],
@@ -796,7 +806,8 @@ export function Admin() {
     ),
     [contentEdit, setContentEdit] = useState<
       SessionRow | ReelRow | null | undefined
-    >(undefined);
+    >(undefined),
+    [adminForm, setAdminForm] = useState(false);
   async function refresh(q = search) {
     try {
       setData(await api<Data>(`/api/admin/data?q=${encodeURIComponent(q)}`));
@@ -852,6 +863,7 @@ export function Admin() {
     "Reels",
     "Media Library",
     "Website Settings",
+    ...(data?.viewer.role === "OWNER" ? ["Administrators"] : []),
   ];
   const resource =
     tab === "Inquiries"
@@ -874,6 +886,7 @@ export function Admin() {
               setProductEdit(undefined);
               setContentEdit(undefined);
               setFeedback("");
+              setAdminForm(false);
             }}
           >
             {name}
@@ -912,6 +925,11 @@ export function Admin() {
                 : tab === "Reels"
                   ? "Reel"
                   : "session"}
+            </button>
+          )}
+          {tab === "Administrators" && (
+            <button className="btn" onClick={() => setAdminForm(true)}>
+              <Plus size={16} /> Add administrator
             </button>
           )}
         </div>
@@ -1553,6 +1571,157 @@ export function Admin() {
                 <Policies values={data.settings.policies} />
                 <button className="btn">Save website settings</button>
               </form>
+            )}
+            {tab === "Administrators" && data.viewer.role === "OWNER" && (
+              <>
+                {adminForm && (
+                  <form
+                    className="admin-editor"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const fields = Object.fromEntries(
+                        new FormData(e.currentTarget),
+                      ) as Record<string, string>;
+                      if (
+                        await save("admins", {
+                          action: "create",
+                          email: fields.email,
+                          password: fields.password,
+                          role: fields.role,
+                        })
+                      ) {
+                        e.currentTarget.reset();
+                        setAdminForm(false);
+                      }
+                    }}
+                  >
+                    <h2>New administrator</h2>
+                    <label>
+                      Email
+                      <input name="email" type="email" maxLength={200} required />
+                    </label>
+                    <label>
+                      Password (14+ characters)
+                      <input name="password" type="password" minLength={14} required />
+                    </label>
+                    <label>
+                      Role
+                      <select name="role" defaultValue="ADMIN">
+                        <option value="ADMIN">Administrator</option>
+                        <option value="OWNER">Owner</option>
+                      </select>
+                    </label>
+                    <button className="btn">Create administrator</button>
+                    <button
+                      type="button"
+                      className="btn outline"
+                      onClick={() => setAdminForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                )}
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Added</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.admins.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            {row.email}
+                            {row.id === data.viewer.id && " (you)"}
+                          </td>
+                          <td>
+                            <select
+                              value={row.role}
+                              disabled={row.id === data.viewer.id}
+                              onChange={(e) =>
+                                save("admins", {
+                                  action: "update",
+                                  id: row.id,
+                                  role: e.target.value,
+                                })
+                              }
+                            >
+                              <option value="ADMIN">Administrator</option>
+                              <option value="OWNER">Owner</option>
+                            </select>
+                          </td>
+                          <td>{row.active ? "Active" : "Disabled"}</td>
+                          <td>{manilaLabel(row.createdAt)}</td>
+                          <td>
+                            <button
+                              className="btn outline"
+                              disabled={row.id === data.viewer.id}
+                              onClick={async () => {
+                                if (
+                                  !confirm(
+                                    row.active
+                                      ? `Disable ${row.email}? They will be signed out immediately.`
+                                      : `Enable ${row.email}?`,
+                                  )
+                                )
+                                  return;
+                                await save("admins", {
+                                  action: "update",
+                                  id: row.id,
+                                  active: !row.active,
+                                });
+                              }}
+                            >
+                              {row.active ? "Disable" : "Enable"}
+                            </button>
+                            {row.id !== data.viewer.id && (
+                              <details>
+                                <summary>Reset password</summary>
+                                <form
+                                  onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    const fields = Object.fromEntries(
+                                      new FormData(e.currentTarget),
+                                    ) as Record<string, string>;
+                                    if (
+                                      await save("admins", {
+                                        action: "resetPassword",
+                                        id: row.id,
+                                        password: fields.password,
+                                      })
+                                    )
+                                      e.currentTarget.reset();
+                                  }}
+                                >
+                                  <label>
+                                    New password (14+ characters)
+                                    <input
+                                      name="password"
+                                      type="password"
+                                      minLength={14}
+                                      required
+                                    />
+                                  </label>
+                                  <button className="btn">Reset password</button>
+                                </form>
+                              </details>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p>
+                  Owners can manage administrator accounts. Disabling an account
+                  or resetting its password signs that person out immediately.
+                </p>
+              </>
             )}
             {data.hasMore && (
               <button

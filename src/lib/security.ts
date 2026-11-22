@@ -90,7 +90,7 @@ export async function session() {
     include: { user: true },
   });
   if (!row || row.expiresAt < new Date() || !row.user.active) return null;
-  return { id: row.user.id, email: row.user.email };
+  return { id: row.user.id, email: row.user.email, role: row.user.role };
 }
 export async function requireAdmin(req?: Request) {
   if (req && req.method !== "GET") sameOrigin(req);

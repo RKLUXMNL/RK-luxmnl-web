@@ -1,15 +1,31 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { body, failure, HttpError, json, requireAdmin } from "@/lib/security";
+import {
+  body,
+  failure,
+  HttpError,
+  json,
+  passwordHash,
+  requireAdmin,
+} from "@/lib/security";
 import { productSchema, liveSchema, reelSchema, id } from "@/lib/validation";
 import { getSettings, settingsSchema } from "@/lib/settings";
 import { productInclude } from "@/lib/catalog";
 import { manilaDate } from "@/lib/manila";
 import { demoCatalogEnabled, publicProductWhere } from "@/lib/public-products";
 type Context = { params: Promise<{ resource: string }> };
+const adminSelect = {
+  id: true,
+  email: true,
+  role: true,
+  active: true,
+  createdAt: true,
+} as const;
+const adminRole = z.enum(["OWNER", "ADMIN"]);
+const adminPassword = z.string().min(14).max(200);
 export async function GET(req: Request, { params }: Context) {
   try {
-    await requireAdmin();
+    const viewer = await requireAdmin();
     const { resource } = await params;
     if (resource !== "data") throw new HttpError(404, "Not found");
     const q = new URL(req.url).searchParams.get("q")?.slice(0, 100) || "";
@@ -21,6 +37,13 @@ export async function GET(req: Request, { params }: Context) {
       .parse(new URL(req.url).searchParams.get("page") || 0);
     const take = 100,
       skip = page * take;
+    const admins =
+      viewer.role === "OWNER"
+        ? await db.adminUser.findMany({
+            select: adminSelect,
+            orderBy: { createdAt: "asc" },
+          })
+        : [];
     const search = q
       ? {
           OR: [
@@ -142,6 +165,8 @@ export async function GET(req: Request, { params }: Context) {
       assets,
       settings,
       counts,
+      viewer: { id: viewer.id, email: viewer.email, role: viewer.role },
+      admins,
     });
   } catch (e) {
     return failure(e);
@@ -149,7 +174,7 @@ export async function GET(req: Request, { params }: Context) {
 }
 export async function POST(req: Request, { params }: Context) {
   try {
-    await requireAdmin(req);
+    const viewer = await requireAdmin(req);
     const { resource } = await params;
     const raw = await body(req);
     const recordId = z.object({ id: id.optional() }).parse(raw).id;
@@ -476,6 +501,110 @@ export async function POST(req: Request, { params }: Context) {
           where: { date: data.date },
           create: data,
           update: { reason: data.reason },
+        }),
+      );
+    }
+    if (resource === "admins") {
+      if (viewer.role !== "OWNER")
+        throw new HttpError(403, "Only owners can manage administrators.");
+      const action = z
+        .enum(["create", "update", "resetPassword"])
+        .parse(raw.action);
+      if (action === "create") {
+        const data = z
+          .object({
+            email: z
+              .email()
+              .max(200)
+              .transform((value) => value.toLowerCase()),
+            password: adminPassword,
+            role: adminRole.default("ADMIN"),
+          })
+          .parse(raw);
+        return json(
+          await db.adminUser.create({
+            data: {
+              email: data.email,
+              passwordHash: await passwordHash(data.password),
+              role: data.role,
+            },
+            select: adminSelect,
+          }),
+        );
+      }
+      if (action === "update") {
+        const data = z
+          .object({
+            id,
+            role: adminRole.optional(),
+            active: z.boolean().optional(),
+          })
+          .parse(raw);
+        if (
+          data.id === viewer.id &&
+          (data.role === "ADMIN" || data.active === false)
+        )
+          throw new HttpError(
+            403,
+            "You cannot change your own role or disable yourself.",
+          );
+        return json(
+          await db.$transaction(async (tx) => {
+            const target = await tx.adminUser.findUnique({
+              where: { id: data.id },
+            });
+            if (!target) throw new HttpError(404, "Record not found.");
+            const losingOwner =
+              target.role === "OWNER" &&
+              (data.role === "ADMIN" || data.active === false);
+            if (losingOwner) {
+              const others = await tx.adminUser.count({
+                where: {
+                  role: "OWNER",
+                  active: true,
+                  id: { not: data.id },
+                },
+              });
+              if (others === 0)
+                throw new HttpError(
+                  409,
+                  "At least one active owner must remain.",
+                );
+            }
+            const row = await tx.adminUser.update({
+              where: { id: data.id },
+              data: {
+                ...(data.role ? { role: data.role } : {}),
+                ...(data.active === undefined ? {} : { active: data.active }),
+              },
+              select: adminSelect,
+            });
+            if (data.active === false)
+              await tx.adminSession.deleteMany({ where: { userId: data.id } });
+            return row;
+          }),
+        );
+      }
+      const data = z.object({ id, password: adminPassword }).parse(raw);
+      if (data.id === viewer.id)
+        throw new HttpError(
+          403,
+          "You cannot reset your own password from administrator management.",
+        );
+      return json(
+        await db.$transaction(async (tx) => {
+          const target = await tx.adminUser.findUnique({
+            where: { id: data.id },
+            select: { id: true },
+          });
+          if (!target) throw new HttpError(404, "Record not found.");
+          const row = await tx.adminUser.update({
+            where: { id: data.id },
+            data: { passwordHash: await passwordHash(data.password) },
+            select: adminSelect,
+          });
+          await tx.adminSession.deleteMany({ where: { userId: data.id } });
+          return row;
         }),
       );
     }
