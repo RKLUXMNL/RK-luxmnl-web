@@ -3,12 +3,11 @@ import { useState, ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
-import { ArrowRight, ChevronDown, Heart, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, Heart } from "lucide-react";
 import { Product, money } from "@/lib/data";
 import { useStore } from "./store";
 import { Inquiry } from "./ui";
 import { ProductCard } from "./storefront";
-import { SpamField, useSubmit } from "./forms";
 import { ProductGallery } from "./product-gallery";
 import { FacebookIcon } from "./facebook-icon";
 function Accordion({
@@ -51,64 +50,6 @@ function Accordion({
         </div>
       </motion.div>
     </section>
-  );
-}
-function InlineInquiry({ product }: { product: Product }) {
-  const { busy, error, success, submit } = useSubmit("inquiry");
-  return success ? (
-    <p role="status">Thank you. Your inquiry has been received.</p>
-  ) : (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(
-          new FormData(e.currentTarget),
-        ) as Record<string, string>;
-        await submit({
-          name: data.name,
-          message: data.message,
-          website: data.website,
-          email: data.contact.includes("@") ? data.contact : "",
-          mobile: data.contact.includes("@") ? "" : data.contact,
-          platform: "Instagram",
-          productId: product.id,
-        });
-      }}
-    >
-      <SpamField />
-      <label>
-        Full name
-        <input
-          name="name"
-          required
-          minLength={2}
-          maxLength={200}
-          autoComplete="name"
-        />
-      </label>
-      <label>
-        Email or contact number
-        <input name="contact" required maxLength={200} />
-      </label>
-      <label>
-        Message
-        <textarea
-          name="message"
-          required
-          minLength={5}
-          maxLength={12000}
-          rows={3}
-        />
-      </label>
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      <button className="btn" disabled={busy}>
-        {busy ? "Sending…" : "Send product inquiry"}
-      </button>
-    </form>
   );
 }
 function LayawayCalculator({ price }: { price: number | null }) {
@@ -181,20 +122,6 @@ function LayawayCalculator({ price }: { price: number | null }) {
     </div>
   );
 }
-const labels: Record<string, string> = {
-  brand: "Brand",
-  color: "Color",
-  condition: "Condition",
-  inclusions: "Inclusions",
-  otherDetails: "Other Details",
-  metal: "Metal Type",
-  purity: "Metal Purity",
-  gemstone: "Gemstone Type",
-  carat: "Diamond Carat Weight",
-  size: "Ring Size",
-  weight: "Jewelry Weight",
-  customization: "Customization Availability",
-};
 export function ProductDetails({
   product: p,
   related,
@@ -210,6 +137,17 @@ export function ProductDetails({
       Object.entries(p.policies).filter(([, value]) => Boolean(value.trim())),
     ),
   };
+  const metalAndWeight = [p.specifications.metal, p.specifications.weight]
+    .filter((value) => Boolean(value?.trim()))
+    .join(" · ");
+  const specifications = [
+    ["Category", p.category],
+    ["Diamond Carat Weight", p.specifications.carat],
+    ["Metal Type and Weight", metalAndWeight],
+    ["Size", p.specifications.size],
+    ["Inclusions", p.specifications.inclusions],
+    ["Other Details", p.specifications.otherDetails],
+  ].filter(([, value]) => Boolean(value?.trim())) as [string, string][];
   return (
     <>
       <div className="breadcrumb">
@@ -222,40 +160,6 @@ export function ProductDetails({
       <section className="product-detail section">
         <div>
           <ProductGallery product={p} suspended={inquiry} />
-          {((p.authenticityEnabled && p.authenticityText) ||
-            p.certificateType ||
-            p.certificateNumber ||
-            p.certificateIssuer ||
-            p.certificateUrl) && (
-            <div className="authenticity">
-              <ShieldCheck />
-              <div>
-                <h3>
-                  {p.authenticityEnabled
-                    ? "Authenticity information"
-                    : "Certificate information"}
-                </h3>
-                {p.authenticityEnabled && p.authenticityText && (
-                  <p>{p.authenticityText}</p>
-                )}
-                {[p.certificateType, p.certificateNumber, p.certificateIssuer]
-                  .filter(Boolean)
-                  .map((text, i) => (
-                    <p key={i}>{text}</p>
-                  ))}
-                {p.certificateUrl && (
-                  <a
-                    className="text-link"
-                    href={p.certificateUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View certificate ↗
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
         </div>
         <div className="detail-copy">
           {p.isDemo && (
@@ -273,18 +177,12 @@ export function ProductDetails({
             </p>
           )}
           <dl className="product-specs">
-            <div>
-              <dt>Category</dt>
-              <dd>{p.category}</dd>
-            </div>
-            {Object.entries(p.specifications)
-              .filter(([, value]) => Boolean(value?.trim()))
-              .map(([key, value]) => (
-                <div key={key}>
-                  <dt>{labels[key] || key}</dt>
-                  <dd className="preserve-lines">{value}</dd>
-                </div>
-              ))}
+            {specifications.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd className="preserve-lines">{value}</dd>
+              </div>
+            ))}
           </dl>
           <button className="btn full" onClick={() => setInquiry(true)}>
             INQUIRE ON THIS ITEM <ArrowRight size={16} />
@@ -327,34 +225,10 @@ export function ProductDetails({
             )}
           </div>
           <div className="product-information">
-            {policies.viewing && (
-              <Accordion title="Viewing & Pickup Information">
-                <p className="preserve-lines">{policies.viewing}</p>
-                <Link
-                  href={`/book-a-viewing?product=${p.id}`}
-                  className="text-link"
-                >
-                  Request an appointment →
-                </Link>
-              </Accordion>
-            )}
-            {p.description && (
-              <Accordion title="Product Description">
-                <p className="preserve-lines">{p.description}</p>
-              </Accordion>
-            )}
-            {policies.payment && (
-              <Accordion title="Payment Options">
-                <p className="preserve-lines">{policies.payment}</p>
-              </Accordion>
-            )}
-            {policies.returns && (
-              <Accordion title="Return & Exchange Policy">
-                <p className="preserve-lines">{policies.returns}</p>
-              </Accordion>
-            )}
-            <Accordion title="Ask About This Item" lazy>
-              <InlineInquiry product={p} />
+            <Accordion title="Product Description">
+              <p className="preserve-lines">
+                {p.description || "No product description has been added yet."}
+              </p>
             </Accordion>
             <Accordion title="Layaway Computation">
               {policies.installment && (
@@ -362,6 +236,16 @@ export function ProductDetails({
               )}
               <LayawayCalculator price={p.price} />
             </Accordion>
+            {policies.payment && (
+              <Accordion title="Payment Methods">
+                <p className="preserve-lines">{policies.payment}</p>
+              </Accordion>
+            )}
+            {policies.delivery && (
+              <Accordion title="Delivery Options">
+                <p className="preserve-lines">{policies.delivery}</p>
+              </Accordion>
+            )}
           </div>
         </div>
       </section>

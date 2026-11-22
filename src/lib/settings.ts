@@ -9,10 +9,11 @@ const safeUrl = z.union([
     .refine((v) => v.startsWith("https://"), "Use HTTPS"),
 ]);
 export const policySchema = z.object({
-  viewing: text.optional(),
+  delivery: text.optional(),
   payment: text.optional(),
-  returns: text.optional(),
   installment: text.optional(),
+  viewing: text.optional(),
+  returns: text.optional(),
 });
 export const settingsSchema = z.object({
   businessName: z.string().trim().min(1).max(150),
@@ -36,8 +37,8 @@ export const defaults: Settings = {
   meetup: "Metro Manila meetups subject to arrangement",
   logo: "",
   policies: {
-    viewing:
-      "Private viewings at Infina Towers, Quezon City are by appointment and subject to confirmation. Metro Manila meetups are subject to arrangement.",
+    delivery:
+      "Delivery and pickup arrangements are subject to confirmation. Contact us to arrange the most convenient option.",
   },
 };
 export async function getSettings(): Promise<Settings> {

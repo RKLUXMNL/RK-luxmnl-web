@@ -111,24 +111,16 @@ type Data = {
   admins: AdminRow[];
 };
 const policyFields = [
-  ["viewing", "Viewing & Pickup Information"],
-  ["payment", "Payment Options"],
-  ["returns", "Return & Exchange Policy"],
-  ["installment", "Installment / Layaway Options"],
+  ["installment", "Layaway Computation"],
+  ["payment", "Payment Methods"],
+  ["delivery", "Delivery Options"],
 ] as const;
 const specFields = [
-  ["brand", "Brand"],
-  ["color", "Color"],
-  ["condition", "Condition"],
+  ["carat", "Diamond Carat Weight"],
+  ["metal", "Metal Type and Weight"],
+  ["size", "Size"],
   ["inclusions", "Inclusions"],
   ["otherDetails", "Other Details"],
-  ["metal", "Metal Type"],
-  ["purity", "Metal Purity"],
-  ["gemstone", "Gemstone Type"],
-  ["carat", "Diamond Carat Weight"],
-  ["size", "Ring Size"],
-  ["weight", "Jewelry Weight"],
-  ["customization", "Customization Availability"],
 ];
 const slugify = (value: string) =>
   value
@@ -175,7 +167,6 @@ function ProductEditor({
   const [mediaIds, setMediaIds] = useState(
       value?.media.map((m) => m.assetId) || [],
     ),
-    [certificateId, setCertificateId] = useState(value?.certificateId || ""),
     [busy, setBusy] = useState(false),
     [mediaBusy, setMediaBusy] = useState(false),
     [mediaPending, setMediaPending] = useState(false);
@@ -207,7 +198,7 @@ function ProductEditor({
           const payload = {
             id: value?.id,
             name: fields.name,
-            slug: fields.slug || slugify(fields.name),
+            slug: value?.slug || slugify(fields.name),
             categoryId: fields.categoryId,
             price: fields.price === "" ? null : Number(fields.price),
             description: fields.description,
@@ -221,12 +212,12 @@ function ProductEditor({
             policies: Object.fromEntries(
               policyFields.map(([key]) => [key, fields[`policy.${key}`] || ""]),
             ),
-            authenticityEnabled: fields.authenticityEnabled === "on",
-            authenticityText: fields.authenticityText || "",
-            certificateType: fields.certificateType || "",
-            certificateNumber: fields.certificateNumber || "",
-            certificateIssuer: fields.certificateIssuer || "",
-            certificateId: certificateId || null,
+            authenticityEnabled: value?.authenticityEnabled ?? false,
+            authenticityText: value?.authenticityText ?? "",
+            certificateType: value?.certificateType ?? "",
+            certificateNumber: value?.certificateNumber ?? "",
+            certificateIssuer: value?.certificateIssuer ?? "",
+            certificateId: value?.certificateId ?? null,
             mediaIds,
           };
           if (await onSave("products", payload)) onClose();
@@ -243,15 +234,6 @@ function ProductEditor({
                 required
                 maxLength={200}
                 defaultValue={value?.name}
-              />
-            </label>
-            <label>
-              URL slug
-              <input
-                name="slug"
-                defaultValue={value?.slug}
-                placeholder="Generated from the name when empty"
-                pattern="[a-z0-9]+(-[a-z0-9]+)*"
               />
             </label>
           </div>
@@ -446,66 +428,6 @@ function ProductEditor({
               </label>
             ))}
           </div>
-        </fieldset>
-        <fieldset>
-          <legend>Authenticity and certification</legend>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              name="authenticityEnabled"
-              defaultChecked={value?.authenticityEnabled}
-            />{" "}
-            Display an owner-approved authenticity statement
-          </label>
-          <label>
-            Approved statement
-            <textarea
-              name="authenticityText"
-              defaultValue={value?.authenticityText}
-            />
-          </label>
-          <div className="form-row">
-            {[
-              ["certificateType", "Certificate type"],
-              ["certificateNumber", "Certificate number"],
-              ["certificateIssuer", "Issuing organization"],
-            ].map(([key, label]) => (
-              <label key={key}>
-                {label}
-                <input
-                  name={key}
-                  defaultValue={String(
-                    value?.[key as keyof AdminProduct] || "",
-                  )}
-                />
-              </label>
-            ))}
-          </div>
-          <UploadControl
-            purpose="certificate"
-            onComplete={async (id) => {
-              setCertificateId(id);
-              await onRefresh();
-            }}
-          />
-          <label>
-            Certificate document
-            <select
-              value={certificateId}
-              onChange={(e) => setCertificateId(e.target.value)}
-            >
-              <option value="">No certificate document</option>
-              {data.assets
-                .filter(
-                  (a) => a.purpose === "certificate" && a.state === "ready",
-                )
-                .map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.filename}
-                  </option>
-                ))}
-            </select>
-          </label>
         </fieldset>
         <fieldset>
           <legend>Additional information</legend>
@@ -1564,8 +1486,8 @@ export function Admin() {
                 ))}
                 <h2>Approved shared policies</h2>
                 <p>
-                  Publish only client-approved information. Blank payment,
-                  return and installment policies stay hidden. Product-specific
+                  Publish only client-approved information. Blank layaway,
+                  payment and delivery sections stay hidden. Product-specific
                   text takes precedence.
                 </p>
                 <Policies values={data.settings.policies} />
