@@ -42,7 +42,10 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [products, categories, settings] = await Promise.all([
     publishedProducts(),
-    db.category.findMany({ orderBy: { name: "asc" } }),
+    db.category.findMany({
+      where: { archived: false },
+      orderBy: { name: "asc" },
+    }),
     getSettings(),
   ]);
   return (

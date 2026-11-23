@@ -769,7 +769,7 @@ export function Admin() {
         resource === "products"
           ? "Archive this product and remove it from the public catalog?"
           : resource === "categories" && productCount > 0
-            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be moved to Uncategorized.`
+            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be removed from the shop.`
             : "Delete this record?",
       )
     )

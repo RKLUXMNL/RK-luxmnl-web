@@ -74,6 +74,7 @@ export async function GET(req: Request, { params }: Context) {
         skip,
       }),
       db.category.findMany({
+        where: { archived: false },
         orderBy: { name: "asc" },
         include: { _count: { select: { products: true } } },
       }),
@@ -631,39 +632,19 @@ export async function DELETE(req: Request, { params }: Context) {
     if (resource === "categories") {
       const category = await db.category.findUnique({
         where: { id: input.id },
-        select: { name: true, _count: { select: { products: true } } },
+        select: { id: true },
       });
       if (!category) throw new HttpError(404, "Category not found.");
-      await db.$transaction(async (tx) => {
-        if (category._count.products > 0) {
-          let fallback = await tx.category.findFirst({
-            where: {
-              OR: [{ name: "Uncategorized" }, { slug: "uncategorized" }],
-            },
-          });
-          if (!fallback || fallback.id === input.id) {
-            let suffix = 0;
-            while (true) {
-              const name = suffix === 0 ? "Uncategorized" : `Uncategorized ${suffix}`;
-              const slug = suffix === 0 ? "uncategorized" : `uncategorized-${suffix}`;
-              const existing = await tx.category.findFirst({
-                where: { OR: [{ name }, { slug }] },
-                select: { id: true },
-              });
-              if (!existing) {
-                fallback = await tx.category.create({ data: { name, slug } });
-                break;
-              }
-              suffix += 1;
-            }
-          }
-          await tx.product.updateMany({
-            where: { categoryId: input.id },
-            data: { categoryId: fallback.id },
-          });
-        }
-        await tx.category.delete({ where: { id: input.id } });
-      });
+      await db.$transaction([
+        db.product.updateMany({
+          where: { categoryId: input.id },
+          data: { archived: true, published: false },
+        }),
+        db.category.update({
+          where: { id: input.id },
+          data: { archived: true },
+        }),
+      ]);
     } else if (resource === "sessions")
       await db.liveSellingSession.delete({ where: { id: input.id } });
     else if (resource === "reels")

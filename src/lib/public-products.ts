@@ -6,6 +6,7 @@ export function publicProductWhere(): Prisma.ProductWhereInput {
   return {
     published: true,
     archived: false,
+    category: { archived: false },
     ...(demoCatalogEnabled() ? {} : { isDemo: false }),
   };
 }
