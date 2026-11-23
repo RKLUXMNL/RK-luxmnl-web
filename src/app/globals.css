@@ -881,6 +881,9 @@ footer {
 .catalog > .small {
   margin: 20px 0;
 }
+.catalog > .center {
+  margin-top: 32px;
+}
 .empty {
   text-align: center;
   padding: 60px 20px;
