@@ -20,7 +20,12 @@ type Asset = {
   authorized: boolean;
   error?: string;
 };
-type Category = { id: string; name: string; slug: string };
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  _count?: { products: number };
+};
 type AdminRole = "OWNER" | "ADMIN";
 type AdminRow = {
   id: string;
@@ -757,11 +762,15 @@ export function Admin() {
     }
   }
   async function remove(resource: string, id: string) {
+    const category = data?.categories.find((c) => c.id === id);
+    const productCount = category?._count?.products || 0;
     if (
       !confirm(
         resource === "products"
           ? "Archive this product and remove it from the public catalog?"
-          : "Delete this record?",
+          : resource === "categories" && productCount > 0
+            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be moved to Uncategorized.`
+            : "Delete this record?",
       )
     )
       return;

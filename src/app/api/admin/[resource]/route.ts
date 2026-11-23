@@ -73,7 +73,10 @@ export async function GET(req: Request, { params }: Context) {
         take,
         skip,
       }),
-      db.category.findMany({ orderBy: { name: "asc" } }),
+      db.category.findMany({
+        orderBy: { name: "asc" },
+        include: { _count: { select: { products: true } } },
+      }),
       db.inquiry.findMany({
         where: search,
         include: { product: { select: { name: true } } },
@@ -625,9 +628,43 @@ export async function DELETE(req: Request, { params }: Context) {
           data: { archived: true, published: false },
         }),
       );
-    if (resource === "categories")
-      await db.category.delete({ where: { id: input.id } });
-    else if (resource === "sessions")
+    if (resource === "categories") {
+      const category = await db.category.findUnique({
+        where: { id: input.id },
+        select: { name: true, _count: { select: { products: true } } },
+      });
+      if (!category) throw new HttpError(404, "Category not found.");
+      await db.$transaction(async (tx) => {
+        if (category._count.products > 0) {
+          let fallback = await tx.category.findFirst({
+            where: {
+              OR: [{ name: "Uncategorized" }, { slug: "uncategorized" }],
+            },
+          });
+          if (!fallback || fallback.id === input.id) {
+            let suffix = 0;
+            while (true) {
+              const name = suffix === 0 ? "Uncategorized" : `Uncategorized ${suffix}`;
+              const slug = suffix === 0 ? "uncategorized" : `uncategorized-${suffix}`;
+              const existing = await tx.category.findFirst({
+                where: { OR: [{ name }, { slug }] },
+                select: { id: true },
+              });
+              if (!existing) {
+                fallback = await tx.category.create({ data: { name, slug } });
+                break;
+              }
+              suffix += 1;
+            }
+          }
+          await tx.product.updateMany({
+            where: { categoryId: input.id },
+            data: { categoryId: fallback.id },
+          });
+        }
+        await tx.category.delete({ where: { id: input.id } });
+      });
+    } else if (resource === "sessions")
       await db.liveSellingSession.delete({ where: { id: input.id } });
     else if (resource === "reels")
       await db.reel.delete({ where: { id: input.id } });
