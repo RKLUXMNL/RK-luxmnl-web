@@ -142,7 +142,7 @@ export function ProductDetails({
     .join(" · ");
   const specifications = [
     ["Category", p.category],
-    ["Diamond Carat Weight", p.specifications.carat],
+    ["Gemstones Carat Weight", p.specifications.carat],
     ["Metal Type and Weight", metalAndWeight],
     ["Size", p.specifications.size],
     ["Inclusions", p.specifications.inclusions],

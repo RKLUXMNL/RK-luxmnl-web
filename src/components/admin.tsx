@@ -116,7 +116,7 @@ const policyFields = [
   ["delivery", "Delivery Options"],
 ] as const;
 const specFields = [
-  ["carat", "Diamond Carat Weight"],
+  ["carat", "Gemstones Carat Weight"],
   ["metal", "Metal Type and Weight"],
   ["size", "Size"],
   ["inclusions", "Inclusions"],
