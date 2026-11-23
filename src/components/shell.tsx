@@ -112,24 +112,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Fine jewelry. Personal stories.
               <br />A little brilliance for every chapter.
             </p>
-            <a
-              href={instagram}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram"
-            >
-              <Instagram size={20} />
-            </a>
-            {facebook && (
-              <a
-                href={facebook}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook"
-              >
-                <FacebookIcon size={20} />
-              </a>
-            )}
           </div>
           <div>
             <h4>Explore</h4>
@@ -142,11 +124,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Link href="/book-a-viewing">Private viewings</Link>
             <Link href="/contact">Contact & FAQs</Link>
             <a href={instagram} target="_blank" rel="noreferrer">
-              Instagram <ArrowUpRight size={13} />
+              <Instagram size={13} /> Instagram <ArrowUpRight size={13} />
             </a>
             {facebook && (
               <a href={facebook} target="_blank" rel="noreferrer">
-                Facebook
+                <FacebookIcon size={13} /> Facebook <ArrowUpRight size={13} />
               </a>
             )}
           </div>
