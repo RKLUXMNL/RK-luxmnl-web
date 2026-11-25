@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
-import { X, Check, Copy, ArrowUpRight } from "lucide-react";
+import { X, Check, Camera, Copy, ArrowUpRight } from "lucide-react";
 import type { Product } from "@/lib/data";
 import { useStore } from "./store";
 import { SpamField, useSubmit } from "./forms";
@@ -157,7 +157,8 @@ export function Inquiry({
   const { settings } = useStore();
   const { submit, busy, error, success } = useSubmit("inquiry");
   const [message, setMessage] = useState(""),
-    [copied, setCopied] = useState(false),
+    [copiedMessage, setCopiedMessage] = useState(false),
+    [copiedPhoto, setCopiedPhoto] = useState(false),
     [copyError, setCopyError] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -168,31 +169,26 @@ export function Inquiry({
       document.body.style.overflow = old;
     };
   }, []);
-  async function copyMessageAndPhoto() {
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopiedMessage(true);
+      setCopyError("");
+    } catch {
+      setCopyError("Please select and copy the message above.");
+    }
+  }
+  async function copyPhoto() {
     try {
       const png = await productImagePng(product?.images[0]);
-      if (png) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/plain": new Blob([message], { type: "text/plain" }),
-            "image/png": png,
-          }),
-        ]);
-        setCopied(true);
-        setCopyError("");
-      } else {
-        await navigator.clipboard.writeText(message);
-        setCopied(true);
-        setCopyError("Message copied, but no product photo was available.");
-      }
+      if (!png) throw new Error("No product photo.");
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": png }),
+      ]);
+      setCopiedPhoto(true);
+      setCopyError("");
     } catch {
-      try {
-        await navigator.clipboard.writeText(message);
-        setCopied(true);
-        setCopyError("Message copied, but the photo could not be copied here.");
-      } catch {
-        setCopyError("Please select and copy the message above.");
-      }
+      setCopyError("Photo copy is unavailable here. Save the photo to share it.");
     }
   }
   return (
@@ -216,15 +212,19 @@ export function Inquiry({
             </div>
             <h2>Your inquiry has been received.</h2>
             <p>
-              Your request is saved with RK Luxmnl. Copy the message and product
-              photo together, then paste them into a direct message. No
-              social-media DM has been sent automatically.
+              Your request is saved with RK Luxmnl. Copy the message, then copy
+              the photo, and paste both into a direct message. No social-media
+              DM has been sent automatically.
             </p>
             <pre className="message-preview">{message}</pre>
             <div className="button-row">
-              <button className="btn" onClick={() => void copyMessageAndPhoto()}>
+              <button className="btn" onClick={() => void copyMessage()}>
                 <Copy size={16} />
-                {copied ? "Message + photo copied" : "Copy message + photo"}
+                {copiedMessage ? "Message copied" : "Copy message"}
+              </button>
+              <button className="btn outline" onClick={() => void copyPhoto()}>
+                <Camera size={16} />
+                {copiedPhoto ? "Photo copied" : "Copy photo"}
               </button>
               {settings.instagram && (
                 <a

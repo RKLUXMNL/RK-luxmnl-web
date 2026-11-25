@@ -900,6 +900,27 @@ footer {
 .catalog > .center {
   margin-top: 32px;
 }
+.pagination {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 32px;
+}
+.pagination button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: #fffaf3;
+  font-size: 11px;
+  color: var(--body);
+}
+.pagination button.current {
+  background: var(--deep-gold);
+  border-color: var(--deep-gold);
+  color: #fffaf3;
+}
 .empty {
   text-align: center;
   padding: 60px 20px;
@@ -1199,6 +1220,9 @@ textarea {
 }
 .about-layout p {
   font-size: 12px;
+}
+.about-layout .btn {
+  margin-top: 18px;
 }
 .about-values {
   display: grid;

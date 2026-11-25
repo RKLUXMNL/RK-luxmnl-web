@@ -327,7 +327,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
     [sort, setSort] = useState("name"),
     [priceMode, setPriceMode] = useState("all"),
     [range, setRange] = useState<number[] | null>(null),
-    [limit, setLimit] = useState(12),
+    [page, setPage] = useState(1),
     [filters, setFilters] = useState(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -335,6 +335,9 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
     if (params.has("search"))
       document.getElementById("product-search")?.focus();
   }, []);
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, sort, priceMode, range]);
   const prices = products.filter((p) => p.price !== null).map((p) => p.price!);
   const min = prices.length ? Math.min(...prices) : 0,
     max = prices.length ? Math.max(...prices) : 0;
@@ -367,13 +370,20 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
             ? (b.price ?? -Infinity) - (a.price ?? -Infinity)
             : 0,
     );
+  const pageSize = 12;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pageProducts = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
   function reset() {
     setSearch("");
     setCategory("All");
     setSort("name");
     setRange(null);
     setPriceMode("all");
-    setLimit(12);
+    setPage(1);
   }
   return (
     <section className="section catalog">
@@ -397,7 +407,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setLimit(12);
+            setPage(1);
           }}
         />
         <button
@@ -425,7 +435,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
               className={category === name ? "selected" : ""}
               onClick={() => {
                 setCategory(name);
-                setLimit(12);
+                setPage(1);
               }}
             >
               {name}
@@ -461,7 +471,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
                 onValueChange={(value) => {
                   setRange(value);
                   setPriceMode("priced");
-                  setLimit(12);
+                  setPage(1);
                 }}
               >
                 <Slider.Track className="slider-track">
@@ -528,7 +538,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
       </p>
       {filtered.length ? (
         <div className="product-grid">
-          {filtered.slice(0, limit).map((p) => (
+          {pageProducts.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
@@ -548,12 +558,25 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
           </Link>
         </div>
       )}
-      {filtered.length > limit && (
-        <div className="center">
-          <button className="btn outline" onClick={() => setLimit(limit + 12)}>
-            Load more pieces
-          </button>
-        </div>
+      {pageCount > 1 && (
+        <nav className="pagination" aria-label="Product pages">
+          {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+            (number) => (
+              <button
+                key={number}
+                className={number === currentPage ? "current" : ""}
+                aria-label={`Page ${number}`}
+                aria-current={number === currentPage ? "page" : undefined}
+                onClick={() => {
+                  setPage(number);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                {number}
+              </button>
+            ),
+          )}
+        </nav>
       )}
     </section>
   );
