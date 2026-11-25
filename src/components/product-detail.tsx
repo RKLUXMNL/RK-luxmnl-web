@@ -142,7 +142,17 @@ export function ProductDetails({
     try {
       const response = await fetch(image);
       const blob = await response.blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      const source = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = source.width;
+      canvas.height = source.height;
+      canvas.getContext("2d")?.drawImage(source, 0, 0);
+      source.close();
+      const png = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png"),
+      );
+      if (!png) throw new Error("Could not convert image.");
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
       setCopied(true);
       setCopyError(false);
     } catch {
