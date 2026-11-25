@@ -837,6 +837,12 @@ footer {
   margin: 0 auto;
   font-size: 12px;
 }
+.catalog h1,
+.catalog h2,
+.catalog h3,
+.catalog h4 {
+  font-family: var(--font-shop-heading), Georgia, serif;
+}
 .catalog-toolbar {
   display: flex;
   gap: 20px;
@@ -1386,13 +1392,14 @@ summary::-webkit-details-marker {
   align-items: center;
   gap: 10px;
 }
-.admin-title-actions select {
-  min-width: 175px;
-}
+.admin-title-actions select,
 .admin-title-actions .btn {
+  width: 150px;
+  height: 39px;
+  min-width: 0;
   min-height: 0;
-  padding: 8px 12px;
-  font-size: 9px;
+  padding: 0 9px;
+  font-size: 8px;
   line-height: 1.2;
 }
 .admin-title h1 {
@@ -2286,26 +2293,19 @@ td {
   }
   .admin-title-actions {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
     gap: 8px;
   }
-  .admin-title-actions select {
-    width: 100%;
-    min-width: 0;
-  }
+  .admin-title-actions select,
   .admin-title-actions .btn {
-    align-self: flex-start;
-    width: auto;
+    width: 150px;
+    height: 39px;
     min-width: 0;
     min-height: 0;
-    justify-content: center;
-    padding: 6px 9px;
+    padding: 0 9px;
     font-size: 8px;
-  }
-  .admin-title .btn {
-    padding: 10px 12px;
-    font-size: 9px;
   }
   .admin-title .eyebrow {
     font-size: 6px;

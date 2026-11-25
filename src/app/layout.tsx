@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import { DM_Sans, Lora, Playfair_Display } from "next/font/google";
 import { StoreProvider } from "@/components/store";
 import { Shell } from "@/components/shell";
 import "./globals.css";
@@ -15,6 +15,12 @@ const bodyFont = DM_Sans({
 
 const headingFont = Playfair_Display({
   variable: "--font-heading",
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+});
+
+const shopHeadingFont = Lora({
+  variable: "--font-shop-heading",
   weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
@@ -52,7 +58,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${bodyFont.variable} ${headingFont.variable} h-full antialiased`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${shopHeadingFont.variable} h-full antialiased`}
     >
       <body>
         <StoreProvider
