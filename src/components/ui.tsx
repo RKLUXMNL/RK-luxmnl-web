@@ -133,6 +133,20 @@ export function ContactFields({
     </>
   );
 }
+async function productImagePng(image?: string) {
+  if (!image) return null;
+  const response = await fetch(image);
+  const blob = await response.blob();
+  const source = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width;
+  canvas.height = source.height;
+  canvas.getContext("2d")?.drawImage(source, 0, 0);
+  source.close();
+  return await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/png"),
+  );
+}
 export function Inquiry({
   product,
   onClose,
@@ -154,6 +168,33 @@ export function Inquiry({
       document.body.style.overflow = old;
     };
   }, []);
+  async function copyMessageAndPhoto() {
+    try {
+      const png = await productImagePng(product?.images[0]);
+      if (png) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": new Blob([message], { type: "text/plain" }),
+            "image/png": png,
+          }),
+        ]);
+        setCopied(true);
+        setCopyError("");
+      } else {
+        await navigator.clipboard.writeText(message);
+        setCopied(true);
+        setCopyError("Message copied, but no product photo was available.");
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(message);
+        setCopied(true);
+        setCopyError("Message copied, but the photo could not be copied here.");
+      } catch {
+        setCopyError("Please select and copy the message above.");
+      }
+    }
+  }
   return (
     <dialog
       ref={dialog}
@@ -175,26 +216,15 @@ export function Inquiry({
             </div>
             <h2>Your inquiry has been received.</h2>
             <p>
-              Your request is saved with RK Luxmnl. You may also copy your
-              message and contact us directly. No social-media DM has been sent
-              automatically.
+              Your request is saved with RK Luxmnl. Copy the message and product
+              photo together, then paste them into a direct message. No
+              social-media DM has been sent automatically.
             </p>
             <pre className="message-preview">{message}</pre>
             <div className="button-row">
-              <button
-                className="btn"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(message);
-                    setCopied(true);
-                    setCopyError("");
-                  } catch {
-                    setCopyError("Please select and copy the message above.");
-                  }
-                }}
-              >
+              <button className="btn" onClick={() => void copyMessageAndPhoto()}>
                 <Copy size={16} />
-                {copied ? "Copied" : "Copy message"}
+                {copied ? "Message + photo copied" : "Copy message + photo"}
               </button>
               {settings.instagram && (
                 <a

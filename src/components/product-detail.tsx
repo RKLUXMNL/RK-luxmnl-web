@@ -3,7 +3,7 @@ import { useState, ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
-import { ArrowRight, Camera, Check, ChevronDown, Copy, Heart } from "lucide-react";
+import { ArrowRight, Camera, ChevronDown, Heart } from "lucide-react";
 import { Product, money } from "@/lib/data";
 import { useStore } from "./store";
 import { Inquiry } from "./ui";
@@ -131,35 +131,6 @@ export function ProductDetails({
 }) {
   const { settings, wishlist, toggleWish } = useStore();
   const [inquiry, setInquiry] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState(false);
-  async function copyProductImage() {
-    const image = p.images[0];
-    if (!image) {
-      setCopyError(true);
-      return;
-    }
-    try {
-      const response = await fetch(image);
-      const blob = await response.blob();
-      const source = await createImageBitmap(blob);
-      const canvas = document.createElement("canvas");
-      canvas.width = source.width;
-      canvas.height = source.height;
-      canvas.getContext("2d")?.drawImage(source, 0, 0);
-      source.close();
-      const png = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!png) throw new Error("Could not convert image.");
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
-      setCopied(true);
-      setCopyError(false);
-    } catch {
-      setCopied(false);
-      setCopyError(true);
-    }
-  }
   const policies = {
     ...settings.policies,
     ...Object.fromEntries(
@@ -232,13 +203,6 @@ export function ProductDetails({
                 ? "Saved to wishlist"
                 : "Save to wishlist"}
             </button>
-            <button className="text-link" onClick={() => void copyProductImage()}>
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? "Photo copied" : "Copy product photo"}
-            </button>
-            {copyError && (
-              <span className="small">Image copy unavailable here. Save the photo to share it.</span>
-            )}
             {settings.instagram && (
               <a
                 className="text-link"
