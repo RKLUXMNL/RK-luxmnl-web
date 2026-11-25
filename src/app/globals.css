@@ -2818,6 +2818,8 @@ legend {
   height: 93px;
   max-width: min(220px, 30vw);
   object-fit: contain;
+  transform: scale(1.15);
+  transform-origin: left center;
 }
 .footer-brand {
   display: inline-flex;
@@ -2828,7 +2830,7 @@ legend {
   width: 150px;
   height: 96px;
   object-fit: contain;
-  transform: scale(1.12);
+  transform: scale(1.3);
   transform-origin: left center;
 }
 @media (max-width: 800px) {
@@ -2856,7 +2858,7 @@ legend {
   .footer-logo {
     width: 110px;
     height: 72px;
-    transform: scale(1.14);
+    transform: scale(1.32);
   }
   .product-detail {
     gap: 20px;
