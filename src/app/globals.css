@@ -33,6 +33,10 @@ body {
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   line-height: 1.8;
+  zoom: 0.96;
+}
+body:has(.catalog) {
+  zoom: 1;
 }
 h1,
 h2,
@@ -1371,6 +1375,14 @@ summary::-webkit-details-marker {
   justify-content: space-between;
   gap: 20px;
   margin: 25px 0;
+}
+.admin-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-title-actions select {
+  min-width: 175px;
 }
 .admin-title h1 {
   font-size: 45px;

@@ -745,6 +745,7 @@ export function Admin() {
     [error, setError] = useState(""),
     [feedback, setFeedback] = useState(""),
     [search, setSearch] = useState(""),
+    [productSort, setProductSort] = useState("name"),
     [logo, setLogo] = useState<string | null>(null),
     [productEdit, setProductEdit] = useState<AdminProduct | null | undefined>(
       undefined,
@@ -822,6 +823,9 @@ export function Admin() {
         ? "appointments"
         : "customizations";
   const requests = data?.[resource] || [];
+  const sortedProducts = [...(data?.products || [])].sort((a, b) =>
+    productSort === "name" ? a.name.localeCompare(b.name) : 0,
+  );
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
@@ -863,19 +867,33 @@ export function Admin() {
             <h1>{tab}</h1>
           </div>
           {["Products", "Live Selling", "Reels"].includes(tab) && (
-            <button
-              className="btn"
-              onClick={() =>
-                tab === "Products" ? setProductEdit(null) : setContentEdit(null)
-              }
-            >
-              <Plus size={16} /> Add{" "}
-              {tab === "Products"
-                ? "product"
-                : tab === "Reels"
-                  ? "Reel"
-                  : "session"}
-            </button>
+            <div className="admin-title-actions">
+              {tab === "Products" && (
+                <select
+                  aria-label="Sort admin products"
+                  value={productSort}
+                  onChange={(e) => setProductSort(e.target.value)}
+                >
+                  <option value="name">Alphabetical (A–Z)</option>
+                  <option value="recent">Recently added</option>
+                </select>
+              )}
+              <button
+                className="btn"
+                onClick={() =>
+                  tab === "Products"
+                    ? setProductEdit(null)
+                    : setContentEdit(null)
+                }
+              >
+                <Plus size={16} /> Add{" "}
+                {tab === "Products"
+                  ? "product"
+                  : tab === "Reels"
+                    ? "Reel"
+                    : "session"}
+              </button>
+            </div>
           )}
           {tab === "Administrators" && (
             <button className="btn" onClick={() => setAdminForm(true)}>
@@ -945,7 +963,7 @@ export function Admin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.products.map((p) => (
+                      {sortedProducts.map((p) => (
                         <tr key={p.id}>
                           <td>
                             {p.name}{" "}
