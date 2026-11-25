@@ -42,7 +42,7 @@ export const productSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     .max(160),
   categoryId: id,
-  categoryIds: z.array(id).min(1).max(20).optional(),
+  categoryIds: z.array(id).max(20).optional(),
   description: long,
   price: z.number().min(0).max(999999999999).multipleOf(0.01).nullable(),
   originalPrice: z

@@ -190,6 +190,18 @@ test("authentication, server authorization, CSRF and session invalidation", asyn
   expect((await page.request.get("/api/admin/data")).status()).toBe(401);
 });
 
+test("admin accepts a product with only its primary category", async () => {
+  const response = await admin.post("/api/admin/products", {
+    data: {
+      ...product("Test Single Category Ring", 1234, false),
+      categoryIds: [],
+    },
+  });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const created = await response.json();
+  expect(created.categoryId).toBe(categoryId);
+});
+
 test("published-only details, actual specifications, galleries, zoom, accordions and inline inquiry", async ({
   page,
 }) => {
