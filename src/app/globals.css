@@ -770,6 +770,11 @@ footer {
   background: #f7ecde;
   border-top: 1px solid var(--border);
 }
+@media (min-width: 801px) {
+  footer {
+    padding-top: 20px;
+  }
+}
 .footer-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1.4fr;
@@ -2121,7 +2126,7 @@ td {
     font-size: 11px;
   }
   footer {
-    padding: 6px 6% 0;
+    padding: 18px 6% 0;
   }
   .footer-grid {
     gap: 14px 12px;
