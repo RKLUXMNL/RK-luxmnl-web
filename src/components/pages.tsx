@@ -165,7 +165,7 @@ export function Booking() {
                 Your viewing request has been submitted. Our team will contact
                 you to confirm your appointment.
               </p>
-              <Link className="btn" href="/shop">
+              <Link className="btn" href="/showroom">
                 Explore the collection
               </Link>
             </div>

@@ -4,7 +4,12 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
 import { ArrowRight, Camera, ChevronDown, Heart } from "lucide-react";
-import { Product, money } from "@/lib/data";
+import {
+  Product,
+  money,
+  isSaleProduct,
+  hasStrikePrice,
+} from "@/lib/data";
 import { useStore } from "./store";
 import { Inquiry } from "./ui";
 import { ProductCard } from "./storefront";
@@ -145,14 +150,15 @@ export function ProductDetails({
     ["Gemstones Carat Weight", p.specifications.carat],
     ["Metal Type and Weight", metalAndWeight],
     ["Size", p.specifications.size],
+    ["Setting", p.specifications.setting],
     ["Inclusions", p.specifications.inclusions],
     ["Other Details", p.specifications.otherDetails],
   ].filter(([, value]) => Boolean(value?.trim())) as [string, string][];
   return (
     <>
       <div className="breadcrumb">
-        <Link href="/shop">The collection</Link> /{" "}
-        <Link href={`/shop?category=${encodeURIComponent(p.category)}`}>
+        <Link href="/showroom">The collection</Link> /{" "}
+        <Link href={`/showroom?category=${encodeURIComponent(p.category)}`}>
           {p.category}
         </Link>{" "}
         / {p.name}
@@ -170,10 +176,19 @@ export function ProductDetails({
           )}
           <span className="eyebrow">{p.category}</span>
           <h1>{p.name}</h1>
-          <div className="detail-price">{money(p.price)}</div>
-          {p.status && (
+          <div className="detail-price">
+            {hasStrikePrice(p) && <s>{money(p.originalPrice)}</s>}
+            {money(p.price)}
+          </div>
+          {(p.status || isSaleProduct(p) || p.placement === "LIVE") && (
             <p className="availability">
-              <span className="badge">{p.status}</span>
+              {p.status && <span className="badge">{p.status}</span>}{" "}
+              {isSaleProduct(p) && (
+                <span className="badge sale-badge">ON SALE</span>
+              )}{" "}
+              {p.placement === "LIVE" && (
+                <span className="badge live-badge">LIVE</span>
+              )}
             </p>
           )}
           <dl className="product-specs">

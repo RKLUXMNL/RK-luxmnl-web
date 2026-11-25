@@ -7,14 +7,14 @@ Open `/admin/login` on the business domain and use your provisioned account. Sig
 ## Add and publish jewelry
 
 1. Open **Products → Add product**.
-2. Enter the real product name, category, description and availability. Leave price blank for **Price Upon Inquiry**. A numeric price, including zero, is published as entered; verify it carefully.
+2. Enter the real product name, category, description, availability and placement. `Showroom` is the default; `Live selling` products appear on the live selling page and in showroom search results. Leave price blank for **Price Upon Inquiry**. A numeric price, including zero, is published as entered; verify it carefully. Enter an **Original price** only when it is higher than the current price and should be struck through. Products in the normal `Sale` category get an `ON SALE` badge even without an original price.
 3. In **Media → Add photos and videos**, select multiple JPEG/PNG/WebP photos and MP4/WebM clips together. You can add another selection before uploading. Click **Upload N files** and watch each file's progress. Successful files are retained if another fails; use **Retry file** for failures. Finish or remove queued files before saving. Products support up to 30 combined gallery items.
 4. Use the media arrows to arrange photos and videos in the desired playback order. **Set primary image** moves a selected photograph to the front. Remove detaches it from this piece without deleting it from storage. Failed-file retries preserve the original selection order.
 5. For a short product clip, use the ordinary upload. For a larger video, expand **Upload a video using Stream** and wait until it is ready before attaching/saving it.
 6. Fill only specifications that are known. Empty fields are hidden publicly. Add an authenticity statement or certificate details only when approved for that specific piece. Certificate documents can be images or PDFs.
 7. Leave product-specific policy fields blank to inherit approved Website Settings. Enter a product-specific override only when it is genuinely different and approved.
 8. Confirm the inventory/media/details checkbox. Check **Publish on the website**, then **Save product**. Publication requires a ready photograph and owner-confirmed information.
-9. Open `/shop`, find the item, and check its gallery, specifications, price and inquiry form. All cards open `/products/[slug]`.
+9. Open `/showroom`, find the item, and check its gallery, specifications, price and inquiry form. Live selling placements are verified on `/live-selling`. All cards open `/products/[slug]`.
 
 ### Customer gallery playback
 

@@ -42,6 +42,7 @@ export const categories = [
   "Gemstone Jewelry",
   "Other Jewelry",
 ];
+export type ProductPlacement = "SHOWROOM" | "LIVE";
 export type Product = {
   id: string;
   slug: string;
@@ -52,6 +53,8 @@ export type Product = {
   categories: string[];
   categoryIds: string[];
   price: number | null;
+  originalPrice: number | null;
+  placement: ProductPlacement;
   description: string;
   status: string;
   images: string[];
@@ -66,6 +69,12 @@ export type Product = {
   certificateIssuer: string;
   certificateUrl: string | null;
 };
+export const isSaleProduct = (p: Pick<Product, "categories">) =>
+  p.categories.some((name) => name.trim().toLowerCase() === "sale");
+export const hasStrikePrice = (
+  p: Pick<Product, "originalPrice" | "price">,
+) =>
+  p.price !== null && p.originalPrice !== null && p.originalPrice > p.price;
 export type ProductMedia = {
   id: string;
   kind: "image" | "video";

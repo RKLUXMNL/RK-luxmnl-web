@@ -4,6 +4,7 @@ import { Camera } from "lucide-react";
 import { DateCalendar } from "./pages";
 import { FacebookIcon } from "./facebook-icon";
 import { useStore } from "./store";
+import { Heading } from "./ui";
 import { ProductCard } from "./storefront";
 import { MediaPlayer } from "./video";
 import { Product } from "@/lib/data";
@@ -158,7 +159,13 @@ function SessionPanel({ session }: { session: LiveSession }) {
     </article>
   );
 }
-export function LiveSelling({ sessions }: { sessions: LiveSession[] }) {
+export function LiveSelling({
+  sessions,
+  liveProducts,
+}: {
+  sessions: LiveSession[];
+  liveProducts: Product[];
+}) {
   const { settings } = useStore();
   const initial =
     sessions.find((s) => s.status === "Live Now") ||
@@ -181,6 +188,20 @@ export function LiveSelling({ sessions }: { sessions: LiveSession[] }) {
           in our recorded sessions.
         </p>
       </section>
+      {liveProducts.length > 0 && (
+        <section className="section">
+          <Heading
+            eyebrow="AVAILABLE IN LIVE SELLING"
+            title="Live products"
+            text="Explore jewelry selected for our live selling sessions."
+          />
+          <div className="product-grid">
+            {liveProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="section live-layout">
         <aside>
           <h2>Live Selling Calendar</h2>

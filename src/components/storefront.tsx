@@ -18,6 +18,8 @@ import {
   photos,
   categoryPhoto,
   money,
+  isSaleProduct,
+  hasStrikePrice,
   categories as preferredCategories,
 } from "@/lib/data";
 import { useStore } from "./store";
@@ -26,13 +28,22 @@ import { FacebookIcon } from "./facebook-icon";
 export function ProductCard({ product: p }: { product: Product }) {
   const { wishlist, toggleWish } = useStore();
   const [inquiry, setInquiry] = useState(false);
+  const sale = isSaleProduct(p);
   return (
     <article className="product-card">
       <div className="product-photo">
         <Link href={`/products/${p.slug}`}>
           <Photo src={p.images[0]} alt={p.name} />
         </Link>
-        {p.isDemo && <span className="sample-tag">DEMO PRODUCT</span>}
+        {(p.placement === "LIVE" || sale || p.isDemo) && (
+          <div className="product-card-badges">
+            {p.placement === "LIVE" && (
+              <span className="card-tag live-card-tag">LIVE</span>
+            )}
+            {sale && <span className="card-tag sale-card-tag">ON SALE</span>}
+            {p.isDemo && <span className="card-tag">DEMO PRODUCT</span>}
+          </div>
+        )}
         <button
           className={"wish " + (wishlist.includes(p.id) ? "selected" : "")}
           onClick={() => toggleWish(p.id)}
@@ -50,7 +61,10 @@ export function ProductCard({ product: p }: { product: Product }) {
           <h3>{p.name}</h3>
         </Link>
         <p>{p.description}</p>
-        <div className="product-price">{money(p.price)}</div>
+        <div className="product-price">
+          {hasStrikePrice(p) && <s>{money(p.originalPrice)}</s>}
+          {money(p.price)}
+        </div>
         <span className="small">{p.status}</span>
         <div className="card-actions">
           <Link href={`/products/${p.slug}`}>
@@ -65,6 +79,9 @@ export function ProductCard({ product: p }: { product: Product }) {
 }
 export function Home() {
   const { products, categories, settings } = useStore();
+  const showroomProducts = products.filter(
+    (p) => p.placement === "SHOWROOM",
+  );
   return (
     <>
       <section className="hero">
@@ -84,7 +101,7 @@ export function Home() {
             customized jewelry made to celebrate your most meaningful moments.
           </p>
           <div className="button-row">
-            <Link href="/shop" className="btn">
+            <Link href="/showroom" className="btn">
               Explore Collection <ArrowRight size={16} />
             </Link>
             <Link href="/book-a-viewing" className="btn outline">
@@ -124,7 +141,7 @@ export function Home() {
       <section className="section categories-section">
         <Heading
           eyebrow="FIND YOUR SIGNATURE"
-          title="Shop by Category"
+          title="Explore by Category"
           text="Little luxuries. Meaningful milestones. Find the piece that speaks to you."
         />
         <div className="category-grid">
@@ -143,7 +160,7 @@ export function Home() {
               <Link
                 key={name}
                 className="category-card"
-                href={`/shop?category=${encodeURIComponent(name)}`}
+                href={`/showroom?category=${encodeURIComponent(name)}`}
               >
                 <Photo
                   src={categoryPhoto(name)}
@@ -165,9 +182,9 @@ export function Home() {
           title="Featured Collection"
           text="Discover our published selection, thoughtfully chosen for your meaningful moments."
         />
-        {products.length ? (
+        {showroomProducts.length ? (
           <div className="product-grid">
-            {products.slice(0, 8).map((p) => (
+            {showroomProducts.slice(0, 8).map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -185,7 +202,7 @@ export function Home() {
           </div>
         )}
         <div className="center">
-          <Link className="btn outline" href="/shop">
+          <Link className="btn outline" href="/showroom">
             Discover the Collection <ArrowRight size={16} />
           </Link>
         </div>
@@ -320,6 +337,30 @@ export function ContactCTA() {
     </section>
   );
 }
+function productSearchText(p: Product) {
+  return [
+    p.name,
+    p.slug,
+    p.category,
+    p.categories.join(" "),
+    p.description,
+    p.status,
+    p.placement === "LIVE" ? "live live selling" : "showroom",
+    isSaleProduct(p) ? "sale on sale" : "",
+    p.price,
+    p.originalPrice,
+    money(p.price),
+    money(p.originalPrice),
+    ...Object.entries(p.specifications).flat(),
+    ...Object.entries(p.policies).flat(),
+    p.authenticityText,
+    p.certificateType,
+    p.certificateNumber,
+    p.certificateIssuer,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
 export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   const { products, categories, wishlist } = useStore();
   const [search, setSearch] = useState(""),
@@ -338,7 +379,17 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   useEffect(() => {
     setPage(1);
   }, [search, category, sort, priceMode, range]);
-  const prices = products.filter((p) => p.price !== null).map((p) => p.price!);
+  const terms = search
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const scopedProducts = terms.length
+    ? products
+    : products.filter((p) => p.placement === "SHOWROOM");
+  const prices = scopedProducts
+    .filter((p) => p.price !== null)
+    .map((p) => p.price!);
   const min = prices.length ? Math.min(...prices) : 0,
     max = prices.length ? Math.max(...prices) : 0;
   const values = range
@@ -347,14 +398,12 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
         Math.min(max, Math.max(range[1], min)),
       ]
     : [min, max];
-  const filtered = products
+  const filtered = scopedProducts
     .filter(
       (p) =>
         (!wishlistOnly || wishlist.includes(p.id)) &&
         (category === "All" || p.categories.includes(category)) &&
-        `${p.name} ${p.categories.join(" ")}`
-          .toLowerCase()
-          .includes(search.toLowerCase()) &&
+        terms.every((term) => productSearchText(p).includes(term)) &&
         (priceMode === "inquiry"
           ? p.price === null
           : priceMode === "priced"
@@ -403,7 +452,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
           type="search"
           id="product-search"
           aria-label="Search products"
-          placeholder="Search by name or category…"
+          placeholder="Search by name, detail, price, or weight…"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -549,7 +598,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
             {wishlistOnly ? "Your personal edit awaits." : "No pieces found"}
           </h3>
           <p>
-            {products.length
+            {scopedProducts.length
               ? "Try another search or reset your filters."
               : "Contact us for a personal selection from our current jewelry offerings."}
           </p>

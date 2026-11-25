@@ -16,7 +16,7 @@ import { FacebookIcon } from "./facebook-icon";
 import { useStore } from "./store";
 const links = [
   ["Home", "/"],
-  ["Shop", "/shop"],
+  ["Showroom", "/showroom"],
   ["Customization", "/customization"],
   ["Book a Viewing", "/book-a-viewing"],
   ["Live Selling", "/live-selling"],
@@ -64,7 +64,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="header-icons">
-          <Link href="/shop?search=true" aria-label="Search jewelry">
+          <Link href="/showroom?search=true" aria-label="Search jewelry">
             <Search size={19} />
           </Link>
           <Link
@@ -115,7 +115,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h4>Explore</h4>
-            <Link href="/shop">The collection</Link>
+            <Link href="/showroom">The collection</Link>
             <Link href="/customization">Bespoke jewelry</Link>
             <Link href="/wishlist">Your wishlist</Link>
           </div>

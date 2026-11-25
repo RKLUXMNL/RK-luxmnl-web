@@ -45,6 +45,14 @@ export const productSchema = z.object({
   categoryIds: z.array(id).min(1).max(20).optional(),
   description: long,
   price: z.number().min(0).max(999999999999).multipleOf(0.01).nullable(),
+  originalPrice: z
+    .number()
+    .min(0)
+    .max(999999999999)
+    .multipleOf(0.01)
+    .nullable()
+    .default(null),
+  placement: z.enum(["SHOWROOM", "LIVE"]).default("SHOWROOM"),
   availability: z.enum(["Available", "Reserved", "Sold", "Made to Order"]),
   published: z.boolean(),
   ownerConfirmed: z.boolean(),
@@ -62,6 +70,7 @@ export const productSchema = z.object({
       carat: short.optional(),
       size: short.optional(),
       weight: short.optional(),
+      setting: short.optional(),
       customization: short.optional(),
     })
     .default({}),

@@ -7,7 +7,7 @@ export default function NotFound() {
         The piece may no longer be published. Explore our collection or contact
         us for a personal selection.
       </p>
-      <Link href="/shop" className="btn">
+      <Link href="/showroom" className="btn">
         Explore jewelry
       </Link>
     </section>

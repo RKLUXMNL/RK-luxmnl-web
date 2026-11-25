@@ -21,6 +21,13 @@ export default async function Page() {
     },
     orderBy: { startsAt: "desc" },
   });
+  const liveProducts = (
+    await db.product.findMany({
+      where: { ...publicProductWhere(), placement: "LIVE" },
+      include: productInclude,
+      orderBy: { createdAt: "desc" },
+    })
+  ).map(productDto);
   const sessions = rows.map((row) => ({
     id: row.id,
     title: row.title,
@@ -38,5 +45,5 @@ export default async function Page() {
       timestamp: item.timestamp,
     })),
   }));
-  return <LiveSelling sessions={sessions} />;
+  return <LiveSelling sessions={sessions} liveProducts={liveProducts} />;
 }

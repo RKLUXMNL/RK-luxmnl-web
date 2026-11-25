@@ -59,7 +59,12 @@ async function upload(
   expect(finish.ok(), await finish.text()).toBeTruthy();
   return auth;
 }
-function product(name: string, price: number | null, published = true) {
+function product(
+  name: string,
+  price: number | null,
+  published = true,
+  extra: Record<string, unknown> = {},
+) {
   return {
     name,
     slug: name.toLowerCase().replaceAll(" ", "-"),
@@ -73,6 +78,7 @@ function product(name: string, price: number | null, published = true) {
     specifications: { metal: "Test-approved metal", size: "" },
     policies: {},
     authenticityEnabled: false,
+    ...extra,
   };
 }
 async function loginPage(page: Page) {
@@ -100,6 +106,9 @@ test.beforeAll(async () => {
     data: { name: "Diamond Rings", slug: "diamond-rings" },
   });
   categoryId = category.id;
+  const saleCategory = await database.category.create({
+    data: { name: "Sale", slug: "sale" },
+  });
   admin = await createRequest.newContext({
     baseURL: base,
     extraHTTPHeaders: { Origin: base },
@@ -121,6 +130,18 @@ test.beforeAll(async () => {
   productId = (await post("products", product("Test Solitaire", 10000))).id;
   secondId = (await post("products", product("Test Trilogy", 50000))).id;
   await post("products", product("Test Inquiry Ring", null));
+  await post(
+    "products",
+    product("Live Sale Ring", 48000, true, {
+      placement: "LIVE",
+      originalPrice: 50000,
+      categoryIds: [saleCategory.id],
+      specifications: {
+        metal: "Japan setting",
+        weight: "18k gold 14g",
+      },
+    }),
+  );
   draftId = (await post("products", product("Private Draft Ring", 123, false)))
     .id;
 });
@@ -256,7 +277,8 @@ test("published-only details, actual specifications, galleries, zoom, accordions
 test("catalog search, derived dual range, inquiry-only pricing, sorting and reset", async ({
   page,
 }) => {
-  await page.goto("/shop");
+  expect((await anon.get("/shop", { maxRedirects: 0 })).status()).toBe(308);
+  await page.goto("/showroom");
   await expect(page.locator(".product-card")).toHaveCount(3);
   await page
     .getByRole("button", { name: "Save Test Solitaire", exact: true })
@@ -265,7 +287,7 @@ test("catalog search, derived dual range, inquiry-only pricing, sorting and rese
   await expect(page.locator(".product-card")).toHaveCount(1);
   await page.reload();
   await expect(page.locator(".product-card h3")).toHaveText("Test Solitaire");
-  await page.goto("/shop");
+  await page.goto("/showroom");
   await expect(
     page.getByRole("slider", { name: "Minimum price" }),
   ).toHaveAttribute("aria-valuemin", "10000");
@@ -289,6 +311,32 @@ test("catalog search, derived dual range, inquiry-only pricing, sorting and rese
   await expect(page.locator(".product-card")).toHaveCount(1);
   await page.getByRole("link", { name: "View details", exact: true }).click();
   await expect(page).toHaveURL(/products\/test-trilogy/);
+});
+
+test("showroom search covers live products, details, prices, sale and live badges", async ({
+  page,
+}) => {
+  await page.goto("/showroom");
+  await expect(page.locator(".product-card")).toHaveCount(3);
+  await page.getByRole("searchbox").fill("Japan");
+  await expect(page.locator(".product-card")).toHaveCount(1);
+  await expect(page.locator(".product-card h3")).toHaveText("Live Sale Ring");
+  await expect(page.locator(".live-card-tag")).toHaveText("LIVE");
+  await expect(page.locator(".sale-card-tag")).toHaveText("ON SALE");
+  await expect(page.locator(".product-price s")).toContainText("50,000.00");
+  await page.getByRole("searchbox").fill("48000");
+  await expect(page.locator(".product-card h3")).toHaveText("Live Sale Ring");
+  await page.getByRole("searchbox").fill("14g");
+  await expect(page.locator(".product-card h3")).toHaveText("Live Sale Ring");
+  await page.goto("/products/live-sale-ring");
+  await expect(page.locator(".detail-price s")).toContainText("50,000.00");
+  await expect(page.getByText("ON SALE", { exact: true })).toBeVisible();
+  await expect(page.getByText("LIVE", { exact: true })).toBeVisible();
+  await page.goto("/live-selling");
+  await expect(
+    page.getByRole("heading", { name: "Live products", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".product-card")).toHaveCount(1);
 });
 
 test("persistent inquiries, idempotency, validation, social contact and admin status", async ({
@@ -793,7 +841,7 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
     await page.setViewportSize({ width, height: 900 });
     for (const route of [
       "/",
-      "/shop",
+      "/showroom",
       "/products/test-solitaire",
       "/book-a-viewing",
       "/customization",
@@ -823,6 +871,8 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
     .click();
   await expect(page).toHaveURL(/live-selling/);
   const sitemap = await anon.get("/sitemap.xml");
+  expect(await sitemap.text()).toContain("/showroom");
+  expect(await sitemap.text()).not.toContain("/shop");
   expect(await sitemap.text()).toContain("/products/test-solitaire");
   expect(await sitemap.text()).not.toContain("private-draft-ring");
 });

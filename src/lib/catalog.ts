@@ -26,6 +26,9 @@ export function productDto(p: FullProduct): Product {
       ? p.productCategories.map((item) => item.categoryId)
       : [p.categoryId],
     price: p.price === null ? null : Number(p.price),
+    originalPrice:
+      p.originalPrice === null ? null : Number(p.originalPrice),
+    placement: p.placement,
     description: p.description,
     status: p.availability,
     media: p.media

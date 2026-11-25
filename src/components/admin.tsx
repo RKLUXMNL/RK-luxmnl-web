@@ -42,6 +42,8 @@ type AdminProduct = {
   categoryId: string;
   categoryIds?: string[];
   price: string | null;
+  originalPrice: string | null;
+  placement: "SHOWROOM" | "LIVE";
   description: string;
   availability: string;
   published: boolean;
@@ -123,11 +125,13 @@ const policyFields = [
 ] as const;
 const specFields = [
   ["carat", "Gemstones Carat Weight"],
-  ["metal", "Metal Type and Weight"],
+  ["metal", "Metal Type"],
+  ["weight", "Weight"],
   ["size", "Size"],
+  ["setting", "Setting"],
   ["inclusions", "Inclusions"],
   ["otherDetails", "Other Details"],
-];
+] as const;
 const slugify = (value: string) =>
   value
     .toLowerCase()
@@ -210,6 +214,9 @@ function ProductEditor({
             categoryId: fields.categoryId,
             categoryIds,
             price: fields.price === "" ? null : Number(fields.price),
+            originalPrice:
+              fields.originalPrice === "" ? null : Number(fields.originalPrice),
+            placement: fields.placement === "LIVE" ? "LIVE" : "SHOWROOM",
             description: fields.description,
             availability: fields.availability,
             published: fields.published === "on",
@@ -284,6 +291,26 @@ function ProductEditor({
                 step="0.01"
                 defaultValue={value?.price ?? ""}
               />
+            </label>
+            <label>
+              Original price (optional, for strikethrough)
+              <input
+                name="originalPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={value?.originalPrice ?? ""}
+              />
+            </label>
+            <label>
+              Placement
+              <select
+                name="placement"
+                defaultValue={value?.placement || "SHOWROOM"}
+              >
+                <option value="SHOWROOM">Showroom</option>
+                <option value="LIVE">Live selling</option>
+              </select>
             </label>
           </div>
           <label>
@@ -789,7 +816,7 @@ export function Admin() {
         resource === "products"
           ? "Archive this product and remove it from the public catalog?"
           : resource === "categories" && productCount > 0
-            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be unlinked from it and removed from the shop if no categories remain.`
+            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be unlinked from it and removed from the showroom if no categories remain.`
             : "Delete this record?",
       )
     )
@@ -957,6 +984,7 @@ export function Admin() {
                       <tr>
                         <th>Product</th>
                         <th>Price</th>
+                        <th>Placement</th>
                         <th>Availability</th>
                         <th>Publication</th>
                         <th>Actions</th>
@@ -970,7 +998,19 @@ export function Admin() {
                             {p.isDemo && <span className="badge">Demo</span>}
                           </td>
                           <td data-label="Price">
+                            {p.price !== null &&
+                              p.originalPrice !== null &&
+                              Number(p.originalPrice) > Number(p.price) && (
+                                <s className="admin-original-price">
+                                  {money(Number(p.originalPrice))}
+                                </s>
+                              )}{" "}
                             {money(p.price === null ? null : Number(p.price))}
+                          </td>
+                          <td data-label="Placement">
+                            {p.placement === "LIVE"
+                              ? "Live selling"
+                              : "Showroom"}
                           </td>
                           <td data-label="Availability">{p.availability}</td>
                           <td data-label="Publication">
