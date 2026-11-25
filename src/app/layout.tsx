@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { DM_Sans, Playfair_Display } from "next/font/google";
 import { StoreProvider } from "@/components/store";
 import { Shell } from "@/components/shell";
 import "./globals.css";
@@ -8,12 +8,12 @@ import { publishedProducts } from "@/lib/catalog";
 import { getSettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
-const bodyFont = Inter({
+const bodyFont = DM_Sans({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const headingFont = Fraunces({
+const headingFont = Playfair_Display({
   variable: "--font-heading",
   weight: ["400", "500", "600"],
   subsets: ["latin"],

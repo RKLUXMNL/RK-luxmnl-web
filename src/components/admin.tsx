@@ -1285,6 +1285,7 @@ export function Admin() {
                       </div>
                     ))}
                     <form
+                      className="block-date-form"
                       onSubmit={async (e) => {
                         e.preventDefault();
                         const fields = Object.fromEntries(
