@@ -766,7 +766,7 @@ small,
   margin-top: 27px;
 }
 footer {
-  padding: 20px 6% 0;
+  padding: 6px 6% 0;
   background: #f7ecde;
   border-top: 1px solid var(--border);
 }
@@ -2121,7 +2121,7 @@ td {
     font-size: 11px;
   }
   footer {
-    padding: 18px 6% 0;
+    padding: 6px 6% 0;
   }
   .footer-grid {
     gap: 14px 12px;
@@ -2268,6 +2268,23 @@ td {
   .admin-title h1 {
     font-size: 36px;
   }
+  .admin-title {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .admin-title-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .admin-title-actions select,
+  .admin-title-actions .btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
   .admin-title .btn {
     padding: 10px 12px;
     font-size: 9px;
@@ -2275,6 +2292,55 @@ td {
   .admin-title .eyebrow {
     font-size: 6px;
     letter-spacing: 1.5px;
+  }
+  .table-wrap {
+    overflow: visible;
+    border: 0;
+    margin: 18px 0;
+  }
+  table {
+    white-space: normal;
+  }
+  thead {
+    display: none;
+  }
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+  tbody tr {
+    border: 1px solid var(--border);
+    background: #fffdf9;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  tbody td {
+    border: 0;
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--body);
+    opacity: 0.7;
+  }
+  tbody td:last-child {
+    justify-content: flex-start;
+  }
+  tbody td:last-child::before {
+    display: none;
+  }
+  tbody td .button-row {
+    flex-wrap: wrap;
   }
   .admin-editor {
     padding: 18px;
@@ -2700,7 +2766,7 @@ legend {
 }
 .header .business-logo {
   width: 161px;
-  height: 88px;
+  height: 92px;
   max-width: min(220px, 30vw);
   object-fit: contain;
 }
@@ -2711,7 +2777,7 @@ legend {
 }
 .footer-logo {
   width: 150px;
-  height: 82px;
+  height: 96px;
   object-fit: contain;
 }
 @media (max-width: 800px) {
@@ -2720,7 +2786,7 @@ legend {
   }
   .header .business-logo {
     width: 128px;
-    height: 70px;
+    height: 76px;
     max-width: 30vw;
   }
   .footer-grid {
@@ -2733,12 +2799,12 @@ legend {
   }
   .header .business-logo {
     width: 114px;
-    height: 62px;
+    height: 71px;
     max-width: 34vw;
   }
   .footer-logo {
     width: 110px;
-    height: 60px;
+    height: 72px;
   }
   .product-detail {
     gap: 20px;

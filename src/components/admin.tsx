@@ -965,22 +965,22 @@ export function Admin() {
                     <tbody>
                       {sortedProducts.map((p) => (
                         <tr key={p.id}>
-                          <td>
+                          <td data-label="Product">
                             {p.name}{" "}
                             {p.isDemo && <span className="badge">Demo</span>}
                           </td>
-                          <td>
+                          <td data-label="Price">
                             {money(p.price === null ? null : Number(p.price))}
                           </td>
-                          <td>{p.availability}</td>
-                          <td>
+                          <td data-label="Availability">{p.availability}</td>
+                          <td data-label="Publication">
                             {p.archived
                               ? "Archived"
                               : p.published
                                 ? "Published"
                                 : "Unpublished"}
                           </td>
-                          <td>
+                          <td data-label="Actions">
                             <div className="button-row">
                               <button
                                 className="text-link"
@@ -1349,7 +1349,7 @@ export function Admin() {
                         : data.reels
                       ).map((row) => (
                         <tr key={row.id}>
-                          <td>
+                          <td data-label="Title">
                             {row.title}
                             {"startsAt" in row && (
                               <p>
@@ -1357,8 +1357,10 @@ export function Admin() {
                               </p>
                             )}
                           </td>
-                          <td>{row.published ? "Published" : "Unpublished"}</td>
-                          <td>
+                          <td data-label="Publication">
+                            {row.published ? "Published" : "Unpublished"}
+                          </td>
+                          <td data-label="Actions">
                             <div className="button-row">
                               <button
                                 className="text-link"
@@ -1605,11 +1607,11 @@ export function Admin() {
                     <tbody>
                       {data.admins.map((row) => (
                         <tr key={row.id}>
-                          <td>
+                          <td data-label="Email">
                             {row.email}
                             {row.id === data.viewer.id && " (you)"}
                           </td>
-                          <td>
+                          <td data-label="Role">
                             <select
                               value={row.role}
                               disabled={row.id === data.viewer.id}
@@ -1625,9 +1627,11 @@ export function Admin() {
                               <option value="OWNER">Owner</option>
                             </select>
                           </td>
-                          <td>{row.active ? "Active" : "Disabled"}</td>
-                          <td>{manilaLabel(row.createdAt)}</td>
-                          <td>
+                          <td data-label="Status">
+                            {row.active ? "Active" : "Disabled"}
+                          </td>
+                          <td data-label="Added">{manilaLabel(row.createdAt)}</td>
+                          <td data-label="Actions">
                             <button
                               className="btn outline"
                               disabled={row.id === data.viewer.id}
