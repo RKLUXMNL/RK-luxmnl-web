@@ -43,7 +43,18 @@ export default async function Page({
     await db.product.findMany({
       where: {
         ...publicProductWhere(),
-        categoryId: product.categoryId,
+        AND: [
+          {
+            OR: [
+              {
+                productCategories: {
+                  some: { categoryId: { in: product.categoryIds } },
+                },
+              },
+              { categoryId: product.categoryId },
+            ],
+          },
+        ],
         id: { not: product.id },
       },
       include: productInclude,

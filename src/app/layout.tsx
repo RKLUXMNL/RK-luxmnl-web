@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { StoreProvider } from "@/components/store";
 import { Shell } from "@/components/shell";
 import "./globals.css";
@@ -13,7 +13,7 @@ const bodyFont = Inter({
   subsets: ["latin"],
 });
 
-const headingFont = Cormorant_Garamond({
+const headingFont = Fraunces({
   variable: "--font-heading",
   weight: ["400", "500", "600"],
   subsets: ["latin"],

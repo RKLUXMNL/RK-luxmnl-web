@@ -324,7 +324,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   const { products, categories, wishlist } = useStore();
   const [search, setSearch] = useState(""),
     [category, setCategory] = useState("All"),
-    [sort, setSort] = useState("featured"),
+    [sort, setSort] = useState("name"),
     [priceMode, setPriceMode] = useState("all"),
     [range, setRange] = useState<number[] | null>(null),
     [limit, setLimit] = useState(12),
@@ -348,8 +348,8 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
     .filter(
       (p) =>
         (!wishlistOnly || wishlist.includes(p.id)) &&
-        (category === "All" || p.category === category) &&
-        `${p.name} ${p.category}`
+        (category === "All" || p.categories.includes(category)) &&
+        `${p.name} ${p.categories.join(" ")}`
           .toLowerCase()
           .includes(search.toLowerCase()) &&
         (priceMode === "inquiry"
@@ -370,7 +370,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   function reset() {
     setSearch("");
     setCategory("All");
-    setSort("featured");
+    setSort("name");
     setRange(null);
     setPriceMode("all");
     setLimit(12);
@@ -411,8 +411,8 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
+          <option value="name">Alphabetical (A–Z)</option>
           <option value="featured">Featured selection</option>
-          <option value="name">Name: A–Z</option>
           <option value="price-low">Price: low to high</option>
           <option value="price-high">Price: high to low</option>
         </select>

@@ -40,11 +40,12 @@ model RateLimit {
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  archived Boolean   @default(false)
-  products Product[]
+  id                String            @id @default(cuid())
+  name              String            @unique
+  slug              String            @unique
+  archived          Boolean           @default(false)
+  products          Product[]
+  productCategories ProductCategory[]
 }
 
 model Product {
@@ -54,6 +55,7 @@ model Product {
   description         String         @default("")
   categoryId          String
   category            Category       @relation(fields: [categoryId], references: [id])
+  productCategories   ProductCategory[]
   price               Decimal?       @db.Decimal(14, 2)
   availability        String         @default("Available")
   published           Boolean        @default(false)
@@ -81,6 +83,16 @@ model Product {
   @@index([price])
   @@index([certificateId])
   @@index([createdAt])
+}
+
+model ProductCategory {
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId, productId])
 }
 
 model ProductMedia {

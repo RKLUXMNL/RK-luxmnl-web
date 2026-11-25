@@ -4,6 +4,7 @@ import type { Product } from "./data";
 import { publicProductWhere } from "./public-products";
 export const productInclude = {
   category: true,
+  productCategories: { include: { category: true } },
   media: { include: { asset: true }, orderBy: { position: "asc" as const } },
   certificate: true,
 } satisfies Prisma.ProductInclude;
@@ -18,6 +19,12 @@ export function productDto(p: FullProduct): Product {
     name: p.name,
     category: p.category.name,
     categoryId: p.categoryId,
+    categories: (p.productCategories.length
+      ? p.productCategories.map((item) => item.category.name)
+      : [p.category.name]).sort((a, b) => a.localeCompare(b)),
+    categoryIds: p.productCategories.length
+      ? p.productCategories.map((item) => item.categoryId)
+      : [p.categoryId],
     price: p.price === null ? null : Number(p.price),
     description: p.description,
     status: p.availability,

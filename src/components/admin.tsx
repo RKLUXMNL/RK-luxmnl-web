@@ -24,7 +24,7 @@ type Category = {
   id: string;
   name: string;
   slug: string;
-  _count?: { products: number };
+  _count?: { products: number; productCategories?: number };
 };
 type AdminRole = "OWNER" | "ADMIN";
 type AdminRow = {
@@ -40,6 +40,7 @@ type AdminProduct = {
   name: string;
   slug: string;
   categoryId: string;
+  categoryIds?: string[];
   price: string | null;
   description: string;
   availability: string;
@@ -197,14 +198,17 @@ function ProductEditor({
           e.preventDefault();
           if (mediaBusy || mediaPending) return;
           setBusy(true);
-          const fields = Object.fromEntries(
-            new FormData(e.currentTarget),
-          ) as Record<string, string>;
+          const form = new FormData(e.currentTarget);
+          const fields = Object.fromEntries(form) as Record<string, string>;
+          const categoryIds = form
+            .getAll("categoryIds")
+            .map((categoryId) => String(categoryId));
           const payload = {
             id: value?.id,
             name: fields.name,
             slug: value?.slug || slugify(fields.name),
             categoryId: fields.categoryId,
+            categoryIds,
             price: fields.price === "" ? null : Number(fields.price),
             description: fields.description,
             availability: fields.availability,
@@ -257,6 +261,20 @@ function ProductEditor({
                 ))}
               </select>
             </label>
+            <fieldset className="category-options">
+              <legend>Additional categories</legend>
+              {data.categories.map((c) => (
+                <label key={c.id}>
+                  <input
+                    type="checkbox"
+                    name="categoryIds"
+                    value={c.id}
+                    defaultChecked={(value?.categoryIds || []).includes(c.id)}
+                  />
+                  {c.name}
+                </label>
+              ))}
+            </fieldset>
             <label>
               Price (PHP; blank = inquiry)
               <input
@@ -763,13 +781,14 @@ export function Admin() {
   }
   async function remove(resource: string, id: string) {
     const category = data?.categories.find((c) => c.id === id);
-    const productCount = category?._count?.products || 0;
+    const productCount =
+      category?._count?.productCategories ?? category?._count?.products ?? 0;
     if (
       !confirm(
         resource === "products"
           ? "Archive this product and remove it from the public catalog?"
           : resource === "categories" && productCount > 0
-            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be removed from the shop.`
+            ? `Delete this category? Its ${productCount} product${productCount === 1 ? "" : "s"} will be unlinked from it and removed from the shop if no categories remain.`
             : "Delete this record?",
       )
     )

@@ -76,7 +76,9 @@ export async function GET(req: Request, { params }: Context) {
       db.category.findMany({
         where: { archived: false },
         orderBy: { name: "asc" },
-        include: { _count: { select: { products: true } } },
+        include: {
+          _count: { select: { products: true, productCategories: true } },
+        },
       }),
       db.inquiry.findMany({
         where: search,
@@ -157,7 +159,10 @@ export async function GET(req: Request, { params }: Context) {
         reels,
         assets,
       ].some((rows) => rows.length === take),
-      products,
+      products: products.map((p) => ({
+        ...p,
+        categoryIds: p.productCategories.map((item) => item.categoryId),
+      })),
       categories,
       inquiries,
       appointments,
@@ -220,7 +225,16 @@ export async function POST(req: Request, { params }: Context) {
       );
     }
     if (resource === "products") {
-      const { mediaIds, ...data } = productSchema.parse(raw);
+      const { mediaIds, categoryIds, ...data } = productSchema.parse(raw);
+      const effectiveCategoryIds = [
+        ...new Set([data.categoryId, ...(categoryIds ?? [])]),
+      ];
+      const categories = await db.category.findMany({
+        where: { id: { in: effectiveCategoryIds }, archived: false },
+        select: { id: true },
+      });
+      if (categories.length !== effectiveCategoryIds.length)
+        throw new HttpError(400, "Select valid, active categories.");
       const existing = recordId
         ? await db.product.findUnique({
             where: { id: recordId },
@@ -281,6 +295,15 @@ export async function POST(req: Request, { params }: Context) {
               productId: product.id,
               assetId,
               position,
+            })),
+          });
+          await tx.productCategory.deleteMany({
+            where: { productId: product.id },
+          });
+          await tx.productCategory.createMany({
+            data: effectiveCategoryIds.map((categoryId) => ({
+              productId: product.id,
+              categoryId,
             })),
           });
           return product;
@@ -635,16 +658,46 @@ export async function DELETE(req: Request, { params }: Context) {
         select: { id: true },
       });
       if (!category) throw new HttpError(404, "Category not found.");
-      await db.$transaction([
-        db.product.updateMany({
-          where: { categoryId: input.id },
-          data: { archived: true, published: false },
-        }),
-        db.category.update({
+      const affected = await db.product.findMany({
+        where: {
+          OR: [
+            { categoryId: input.id },
+            { productCategories: { some: { categoryId: input.id } } },
+          ],
+        },
+        select: { id: true },
+      });
+      await db.$transaction(async (tx) => {
+        for (const product of affected) {
+          await tx.productCategory.deleteMany({
+            where: { productId: product.id, categoryId: input.id },
+          });
+          const remaining = await tx.productCategory.findMany({
+            where: {
+              productId: product.id,
+              category: { archived: false },
+            },
+            include: { category: { select: { name: true } } },
+          });
+          remaining.sort((a, b) =>
+            a.category.name.localeCompare(b.category.name),
+          );
+          if (remaining.length)
+            await tx.product.update({
+              where: { id: product.id },
+              data: { categoryId: remaining[0].categoryId },
+            });
+          else
+            await tx.product.update({
+              where: { id: product.id },
+              data: { archived: true, published: false },
+            });
+        }
+        await tx.category.update({
           where: { id: input.id },
           data: { archived: true },
-        }),
-      ]);
+        });
+      });
     } else if (resource === "sessions")
       await db.liveSellingSession.delete({ where: { id: input.id } });
     else if (resource === "reels")
