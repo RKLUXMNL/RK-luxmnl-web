@@ -1,7 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, ArrowUp, ArrowDown, Trash2, LogOut } from "lucide-react";
+import {
+  Plus,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  LogOut,
+  Printer,
+} from "lucide-react";
 import { api } from "@/lib/client";
 import { money } from "@/lib/data";
 import type { Settings } from "@/lib/settings";
@@ -101,6 +109,7 @@ type RequestRow = {
 };
 type Data = {
   query: string;
+  productQuery: string;
   page: number;
   hasMore: boolean;
   products: AdminProduct[];
@@ -772,7 +781,9 @@ export function Admin() {
     [error, setError] = useState(""),
     [feedback, setFeedback] = useState(""),
     [search, setSearch] = useState(""),
+    [productQuery, setProductQuery] = useState(""),
     [productSort, setProductSort] = useState("name"),
+    [printSelected, setPrintSelected] = useState<string[]>([]),
     [logo, setLogo] = useState<string | null>(null),
     [productEdit, setProductEdit] = useState<AdminProduct | null | undefined>(
       undefined,
@@ -781,9 +792,10 @@ export function Admin() {
       SessionRow | ReelRow | null | undefined
     >(undefined),
     [adminForm, setAdminForm] = useState(false);
-  async function refresh(q = search) {
+  async function refresh(q = search, productQ = productQuery) {
     try {
-      setData(await api<Data>(`/api/admin/data?q=${encodeURIComponent(q)}`));
+      const params = new URLSearchParams({ q, productQuery: productQ });
+      setData(await api<Data>(`/api/admin/data?${params}`));
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -978,10 +990,62 @@ export function Admin() {
                     onRefresh={refresh}
                   />
                 )}
+                <form
+                  className="catalog-toolbar"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void refresh(search, productQuery);
+                  }}
+                >
+                  <input
+                    type="search"
+                    aria-label="Search admin products"
+                    placeholder="Search name, category, details, price or status…"
+                    value={productQuery}
+                    onChange={(e) => setProductQuery(e.target.value)}
+                  />
+                  <button className="btn outline" type="submit">
+                    Search
+                  </button>
+                  <button
+                    className="text-link"
+                    type="button"
+                    onClick={() => {
+                      setProductQuery("");
+                      void refresh(search, "");
+                    }}
+                  >
+                    Clear
+                  </button>
+                </form>
+                <div className="button-row admin-print-row">
+                  <button
+                    className="btn outline"
+                    disabled={printSelected.length === 0}
+                    onClick={() =>
+                      window.open(
+                        `/admin/print?ids=${encodeURIComponent(printSelected.join(","))}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      )
+                    }
+                  >
+                    <Printer size={16} /> Print selected ({printSelected.length})
+                  </button>
+                  {printSelected.length > 0 && (
+                    <button
+                      className="text-link"
+                      onClick={() => setPrintSelected([])}
+                    >
+                      Clear selection
+                    </button>
+                  )}
+                </div>
                 <div className="table-wrap">
                   <table>
                     <thead>
                       <tr>
+                        <th aria-label="Print selection" />
                         <th>Product</th>
                         <th>Price</th>
                         <th>Placement</th>
@@ -993,6 +1057,20 @@ export function Admin() {
                     <tbody>
                       {sortedProducts.map((p) => (
                         <tr key={p.id}>
+                          <td data-label="Print">
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${p.name} for printing`}
+                              checked={printSelected.includes(p.id)}
+                              onChange={(e) =>
+                                setPrintSelected((current) =>
+                                  e.target.checked
+                                    ? [...current, p.id]
+                                    : current.filter((id) => id !== p.id),
+                                )
+                              }
+                            />
+                          </td>
                           <td data-label="Product">
                             {p.name}{" "}
                             {p.isDemo && <span className="badge">Demo</span>}
@@ -1744,7 +1822,7 @@ export function Admin() {
                 onClick={async () => {
                   try {
                     const next = await api<Data>(
-                      `/api/admin/data?q=${encodeURIComponent(data.query)}&page=${data.page + 1}`,
+                      `/api/admin/data?q=${encodeURIComponent(data.query)}&productQuery=${encodeURIComponent(data.productQuery)}&page=${data.page + 1}`,
                     );
                     const merge = <T extends { id: string }>(a: T[], b: T[]) =>
                       Array.from(

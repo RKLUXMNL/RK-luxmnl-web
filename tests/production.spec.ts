@@ -202,6 +202,62 @@ test("admin accepts a product with only its primary category", async () => {
   expect(created.categoryId).toBe(categoryId);
 });
 
+test("admin product search covers product fields and is returned with admin data", async () => {
+  for (const query of ["Live Sale", "50,000", "Japan setting", "Diamond Rings"]) {
+    const response = await admin.get(
+      `/api/admin/data?productQuery=${encodeURIComponent(query)}`,
+    );
+    expect(response.ok(), await response.text()).toBeTruthy();
+    const data = await response.json();
+    expect(data.productQuery).toBe(query);
+    expect(data.products.map((item: { name: string }) => item.name)).toContain(
+      "Live Sale Ring",
+    );
+  }
+  const response = await admin.get(
+    "/api/admin/data?productQuery=No Such Product",
+  );
+  const data = await response.json();
+  expect(data.products).toHaveLength(0);
+});
+
+test("admin printable selection shows full product details behind login", async ({
+  page,
+}) => {
+  const printed = await admin.get(`/admin/print?ids=${productId}`);
+  expect(printed.ok(), await printed.text()).toBeTruthy();
+  const html = await printed.text();
+  expect(html).toContain("Test Solitaire");
+  expect(html).toContain("₱10,000.00");
+  expect(html).toContain("Test-approved metal");
+  expect(html).toContain("Specifications");
+  expect([302, 307]).toContain(
+    (await anon.get(`/admin/print?ids=${productId}`)).status(),
+  );
+  await loginPage(page);
+  await page.getByRole("button", { name: "Products", exact: true }).click();
+  await page.getByLabel("Search admin products").fill("Live Sale Ring");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Edit Live Sale Ring", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit Test Solitaire", exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel("Select Live Sale Ring for printing").check();
+  const [popup] = await Promise.all([
+    page.waitForEvent("popup"),
+    page.getByRole("button", { name: /Print selected/ }).click(),
+  ]);
+  await expect(popup).toHaveURL(/\/admin\/print\?ids=/);
+  await expect(
+    popup.getByRole("heading", { name: "Live Sale Ring", exact: true }),
+  ).toBeVisible();
+  await expect(
+    popup.getByText("Japan setting", { exact: true }),
+  ).toBeVisible();
+});
+
 test("published-only details, actual specifications, galleries, zoom, accordions and inline inquiry", async ({
   page,
 }) => {

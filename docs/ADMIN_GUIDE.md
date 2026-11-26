@@ -26,6 +26,12 @@ Cloudflare-hosted product videos use the official Stream player API for playback
 
 Uncheck Publish to remove a listing temporarily. Archive removes it from the public catalog while preserving customer inquiry history. Editing an archived record can restore it as an active record; verify its publication checkbox when saving. Changes automatically apply to linked live-session and Reel product cards.
 
+### Find and print products
+
+Use the search bar above the Products table to find any catalog product by name, slug, description, category, availability, placement, price, original price, specification, policy or certificate detail. Press **Search** to apply it and **Clear** to see all products again. Use the arrows on the **Sort by** control to change the order.
+
+Tick one or more products in the leftmost column, then click **Print selected**. A protected print page opens with the selected items' image, name, price, description, specifications, policies and approved authenticity/certificate details. Use the browser print dialog to print or save as PDF. Selection is temporary and does not change the products.
+
 ## Categories
 
 Use **Categories** to add or rename a category. A category containing products cannot be deleted until those products are reassigned. The six initial categories are editable; no product is duplicated to appear in a different media listing.
@@ -79,7 +85,7 @@ See uploaded files and processing states, preview ready recordings, check Stream
 
 ## Website settings and policies
 
-Keep the business name, public contact details, actual Instagram/Facebook URLs, viewing location, meetup information and business logo current. Upload the approved logo or enter its HTTPS URL. Save the settings after uploading.
+Keep the business name, public contact details, actual Instagram/Facebook URLs, viewing location, meetup information and business logo current. Upload the approved logo or enter its HTTPS URL. Save the settings after uploading. The header and footer display sizes are fixed in the site design; replacing the logo file should not require resizing it in settings.
 
 Enter only approved payment, return/exchange and installment/layaway text. Leave an unavailable policy blank to hide its section. Clearing installment text disables the informational installment section; no financing or payment processing occurs on the website. Product-specific approved text takes precedence over shared defaults.
 

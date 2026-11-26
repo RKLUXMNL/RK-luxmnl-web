@@ -13,6 +13,7 @@ import { getSettings, settingsSchema } from "@/lib/settings";
 import { productInclude } from "@/lib/catalog";
 import { manilaDate } from "@/lib/manila";
 import { demoCatalogEnabled, publicProductWhere } from "@/lib/public-products";
+import { productSearchWhere } from "@/lib/product-search";
 type Context = { params: Promise<{ resource: string }> };
 const adminSelect = {
   id: true,
@@ -28,13 +29,15 @@ export async function GET(req: Request, { params }: Context) {
     const viewer = await requireAdmin();
     const { resource } = await params;
     if (resource !== "data") throw new HttpError(404, "Not found");
-    const q = new URL(req.url).searchParams.get("q")?.slice(0, 100) || "";
+    const searchParams = new URL(req.url).searchParams;
+    const q = searchParams.get("q")?.slice(0, 100) || "";
+    const productQuery = searchParams.get("productQuery")?.slice(0, 100) || "";
     const page = z.coerce
       .number()
       .int()
       .min(0)
       .max(100000)
-      .parse(new URL(req.url).searchParams.get("page") || 0);
+      .parse(searchParams.get("page") || 0);
     const take = 100,
       skip = page * take;
     const admins =
@@ -68,6 +71,7 @@ export async function GET(req: Request, { params }: Context) {
       counts,
     ] = await Promise.all([
       db.product.findMany({
+        where: productSearchWhere(productQuery),
         include: productInclude,
         orderBy: { createdAt: "desc" },
         take,
@@ -149,6 +153,7 @@ export async function GET(req: Request, { params }: Context) {
     return json({
       page,
       query: q,
+      productQuery,
       hasMore: [
         products,
         inquiries,
