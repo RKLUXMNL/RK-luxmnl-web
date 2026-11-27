@@ -1249,7 +1249,7 @@ test("settings persistence, product policy overrides, optional sections and admi
     .getByLabel("Other Details", { exact: true })
     .fill("An owner-edited product detail.");
   await page
-    .getByLabel("Payment Methods", { exact: true })
+    .getByLabel("Payment method details", { exact: true })
     .fill("Product-specific approved payment information.");
   await page.getByRole("button", { name: "Save product", exact: true }).click();
   await expect(page.getByText("Changes saved.", { exact: true })).toBeVisible();

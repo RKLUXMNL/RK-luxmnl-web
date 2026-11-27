@@ -144,6 +144,7 @@ const policyFields = [
   ["payment", "Payment Methods"],
   ["delivery", "Delivery Options"],
 ] as const;
+const productPolicyFields = policyFields.filter(([key]) => key !== "payment");
 const specFields = [
   ["carat", "Gemstones Carat Weight"],
   ["metal", "Metal Type"],
@@ -162,13 +163,15 @@ const slugify = (value: string) =>
 function Policies({
   values = {},
   prefix = "policy.",
+  fields = policyFields,
 }: {
   values?: Record<string, string>;
   prefix?: string;
+  fields?: readonly (readonly [string, string])[];
 }) {
   return (
     <>
-      {policyFields.map(([key, label]) => (
+      {fields.map(([key, label]) => (
         <label key={key}>
           {label}
           <textarea
@@ -371,6 +374,23 @@ function ProductEditor({
           </label>
         </fieldset>
         <fieldset>
+          <legend>Payment method</legend>
+          <p className="small">
+            Enter approved payment method details for this piece. Leave blank to
+            inherit the approved Website Settings text; blank sections stay
+            hidden.
+          </p>
+          <label>
+            Payment method details
+            <textarea
+              name="policy.payment"
+              defaultValue={value?.policies.payment || ""}
+              rows={3}
+              maxLength={10000}
+            />
+          </label>
+        </fieldset>
+        <fieldset>
           <legend>Media</legend>
           <ProductMediaUpload
             selectedIds={mediaIds}
@@ -519,7 +539,7 @@ function ProductEditor({
             Enter approved product-specific overrides only. Blank fields inherit
             approved Website Settings; sections without either are hidden.
           </p>
-          <Policies values={value?.policies} />
+          <Policies values={value?.policies} fields={productPolicyFields} />
         </fieldset>
         <fieldset>
           <legend>Publication</legend>

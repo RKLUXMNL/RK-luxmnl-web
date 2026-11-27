@@ -180,6 +180,9 @@ async function batch(page: Page, retry = false) {
   await page
     .getByRole("combobox", { name: "Category", exact: true })
     .selectOption(categoryId);
+  await page
+    .getByLabel("Payment method details", { exact: true })
+    .fill("Approved product payment method details.");
   let failed = false;
   if (retry)
     await page.route("**/api/uploads", async (route) => {
@@ -257,6 +260,9 @@ async function batch(page: Page, retry = false) {
     include: {
       media: { include: { asset: true }, orderBy: { position: "asc" } },
     },
+  });
+  expect(row.policies).toMatchObject({
+    payment: "Approved product payment method details.",
   });
   expect(row.media.map((item) => item.asset.kind)).toEqual([
     "image",

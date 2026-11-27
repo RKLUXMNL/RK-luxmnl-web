@@ -12,7 +12,7 @@ Open `/admin/login` on the business domain and use your provisioned account. Sig
 4. Use the media arrows to arrange photos and videos in the desired playback order. **Set primary image** moves a selected photograph to the front. Remove detaches it from this piece without deleting it from storage. Failed-file retries preserve the original selection order.
 5. For a short product clip, use the ordinary upload. For a larger video, expand **Upload a video using Stream** and wait until it is ready before attaching/saving it.
 6. Fill only specifications that are known. Empty fields are hidden publicly. Add an authenticity statement or certificate details only when approved for that specific piece. Certificate documents can be images or PDFs.
-7. Leave product-specific policy fields blank to inherit approved Website Settings. Enter a product-specific override only when it is genuinely different and approved.
+7. Enter approved **Payment method details** for the piece in its own field, or leave it blank to inherit approved Website Settings. Leave the other product-specific policy fields blank to inherit their approved Website Settings too. Enter a product-specific override only when it is genuinely different and approved.
 8. Confirm the inventory/media/details checkbox. Check **Publish on the website**, then **Save product**. Publication requires a ready photograph and owner-confirmed information.
 9. Open `/showroom`, find the item, and check its gallery, specifications, price and inquiry form. Live selling placements are verified on `/live-selling`. All cards open `/products/[slug]`.
 
