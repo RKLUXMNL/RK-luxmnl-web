@@ -39,7 +39,6 @@ export const metadata: Metadata = {
       "Natural diamonds, meaningful moments, and personal jewelry consultations.",
   },
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
-  icons: { icon: "/icon.svg" },
   ...(process.env.ENABLE_DEMO_CATALOG === "true"
     ? { robots: { index: false, follow: false } }
     : {}),

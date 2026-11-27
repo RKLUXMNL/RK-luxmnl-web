@@ -214,11 +214,9 @@ export function Home() {
           />
         </div>
         <Reveal className="bespoke-copy">
-          <span className="eyebrow">BESPOKE, BY YOU</span>
+          <span className="eyebrow">Custom-Made. Exclusively Yours</span>
           <h2>
-            Create Something
-            <br />
-            <em>Uniquely Yours</em>
+            Create Your Own Kind of <em>Sparkle.</em>
           </h2>
           <div className="fine-line" />
           <p>
@@ -244,7 +242,7 @@ export function Home() {
         <Reveal>
           <span className="eyebrow">A MOMENT, JUST FOR YOU</span>
           <h2>
-            Experience Elegance <em>in Person</em>
+            Experience the Sparkle <em>Beyond the Screen</em>
           </h2>
           <p>
             Discover the details. Feel the brilliance. Request a private jewelry

@@ -1325,11 +1325,31 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
     page.getByRole("heading", { name: /Timeless Sparkle\. Made to Be Yours/ }),
   ).toBeVisible();
   await expect(
+    page.getByText("Custom-Made. Exclusively Yours", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Create Your Own Kind of Sparkle.",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Experience the Sparkle Beyond the Screen",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
     page.getByRole("heading", { name: "Find your Sparkle", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Handpicked Favorites", exact: true }),
   ).toBeVisible();
+  const iconHrefs = await page
+    .locator('link[rel="icon"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(iconHrefs.length).toBeGreaterThan(0);
+  expect(iconHrefs.join(" ")).not.toContain("/icon.svg");
   await page.getByRole("button", { name: "Open menu" }).click();
   expect(
     await page.locator("nav").getByRole("link").allTextContents(),
@@ -1349,6 +1369,13 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
     .getByRole("link", { name: "Live Selling", exact: true })
     .click();
   await expect(page).toHaveURL(/live-selling/);
+  await page.goto("/customization");
+  await expect(
+    page.getByRole("heading", {
+      name: "Create Your Own Kind of Sparkle.",
+      exact: true,
+    }),
+  ).toBeVisible();
   const sitemap = await anon.get("/sitemap.xml");
   expect(await sitemap.text()).toContain("/showroom");
   expect(await sitemap.text()).not.toContain("/shop");

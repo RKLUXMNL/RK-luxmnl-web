@@ -330,9 +330,7 @@ export function Customization() {
       <section className="page-banner">
         <span className="eyebrow">YOUR STORY, BEAUTIFULLY MADE</span>
         <h1>
-          Create Something
-          <br />
-          <em>Uniquely Yours</em>
+          Create Your Own Kind of <em>Sparkle.</em>
         </h1>
         <p>Let’s explore your vision together.</p>
       </section>
