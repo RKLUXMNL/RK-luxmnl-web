@@ -280,6 +280,18 @@ model ReelProduct {
   @@index([productId])
 }
 
+model SparkleStory {
+  id           String   @id @default(cuid())
+  customerName String
+  platform     String
+  message      String
+  sourceUrl    String   @default("")
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([published, createdAt])
+}
+
 model WebsiteSettings {
   id        String   @id @default("main")
   data      Json

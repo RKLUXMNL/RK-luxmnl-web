@@ -21,6 +21,8 @@ let admin: APIRequestContext,
   productId: string,
   secondId: string,
   draftId: string,
+  storyId: string,
+  draftStoryId: string,
   images: string[];
 type Upload = { assetId: string; token: string; url: string };
 async function post(resource: string, data: unknown) {
@@ -94,7 +96,7 @@ test.beforeAll(async () => {
   if (!new URL(process.env.DATABASE_URL || "").pathname.endsWith("_test"))
     throw Error("Integration tests require an isolated _test database.");
   await database.$executeRawUnsafe(
-    'TRUNCATE "AdminUser", "Category", "MediaAsset", "WebsiteSettings", "RateLimit", "AppointmentSlot", "BlockedDate", "Inquiry", "CustomizationRequest", "LiveSellingSession", "Reel" CASCADE',
+    'TRUNCATE "AdminUser", "Category", "MediaAsset", "WebsiteSettings", "RateLimit", "AppointmentSlot", "BlockedDate", "Inquiry", "CustomizationRequest", "LiveSellingSession", "Reel", "SparkleStory" CASCADE',
   );
   await database.adminUser.create({
     data: { email, passwordHash: await passwordHash(password) },
@@ -144,6 +146,24 @@ test.beforeAll(async () => {
   );
   draftId = (await post("products", product("Private Draft Ring", 123, false)))
     .id;
+  storyId = (
+    await post("stories", {
+      customerName: "Maya from Makati",
+      platform: "Instagram",
+      message: "The halo setting is even more beautiful in person.",
+      sourceUrl: "https://www.instagram.com/p/test-sparkle-story/",
+      published: true,
+    })
+  ).id;
+  draftStoryId = (
+    await post("stories", {
+      customerName: "Unpublished Client",
+      platform: "Facebook",
+      message: "This private draft must never appear on the public site.",
+      sourceUrl: "",
+      published: false,
+    })
+  ).id;
 });
 test.beforeEach(async () => {
   await database.rateLimit.deleteMany();
@@ -221,6 +241,71 @@ test("admin product search covers product fields and is returned with admin data
   expect(data.products).toHaveLength(0);
 });
 
+test("stories are validated, managed in admin and published selectively", async ({
+  page,
+}) => {
+  const invalid = await admin.post("/api/admin/stories", {
+    data: {
+      customerName: "Mismatched Link",
+      platform: "Instagram",
+      message: "This source link belongs to another platform.",
+      sourceUrl: "https://www.facebook.com/rkluxmnl",
+      published: true,
+    },
+  });
+  expect(invalid.status()).toBe(400);
+  const data = await (await admin.get("/api/admin/data")).json();
+  expect(data.stories).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: storyId,
+        customerName: "Maya from Makati",
+        published: true,
+      }),
+      expect.objectContaining({
+        id: draftStoryId,
+        published: false,
+      }),
+    ]),
+  );
+  const publicPage = await anon.get("/stories-of-sparkle");
+  expect(publicPage.ok(), await publicPage.text()).toBeTruthy();
+  const html = await publicPage.text();
+  expect(html).toContain("The halo setting is even more beautiful in person.");
+  expect(html).not.toContain("This private draft must never appear");
+  await loginPage(page);
+  await page.getByRole("button", { name: "Stories of Sparkle", exact: true }).click();
+  await page.getByRole("button", { name: "Add story", exact: true }).click();
+  await page.getByLabel("Customer name", { exact: true }).fill("Admin Test Client");
+  await page.getByLabel("Platform", { exact: true }).selectOption("Facebook");
+  await page
+    .getByLabel("Feedback message", { exact: true })
+    .fill("The custom necklace became an heirloom piece for our family.");
+  await page
+    .getByLabel("Source post URL (optional)", { exact: true })
+    .fill("https://www.facebook.com/rkluxmnl");
+  await page.getByLabel("Publish on Stories of Sparkle").check();
+  await page.getByRole("button", { name: "Save story", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Edit Admin Test Client", exact: true }),
+  ).toBeVisible();
+  await page.goto("/stories-of-sparkle");
+  await expect(
+    page.getByText(
+      "The custom necklace became an heirloom piece for our family.",
+      { exact: false },
+    ),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".story-card")
+      .filter({
+        hasText: "The custom necklace became an heirloom piece for our family.",
+      })
+      .getByRole("link", { name: /View original/i }),
+  ).toHaveAttribute("href", "https://www.facebook.com/rkluxmnl");
+});
+
 test("admin printable selection shows full product details behind login", async ({
   page,
 }) => {
@@ -232,7 +317,8 @@ test("admin printable selection shows full product details behind login", async 
   expect(html).toContain("Test-approved metal");
   expect(html).toContain("Specifications");
   expect([302, 307]).toContain(
-    (await anon.get(`/admin/print?ids=${productId}`)).status(),
+    (await anon.get(`/admin/print?ids=${productId}`, { maxRedirects: 0 }))
+      .status(),
   );
   await loginPage(page);
   await page.getByRole("button", { name: "Products", exact: true }).click();
@@ -279,9 +365,9 @@ test("published-only details, actual specifications, galleries, zoom, accordions
   await expect(
     page.getByText("Test-approved metal", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Ring Size", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Size", { exact: true })).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Payment Options", exact: true }),
+    page.getByRole("button", { name: "Payment Methods", exact: true }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Return & Exchange Policy", exact: true }),
@@ -298,10 +384,10 @@ test("published-only details, actual specifications, galleries, zoom, accordions
   await page.keyboard.press("ArrowRight");
   await page.getByRole("button", { name: "Close fullscreen gallery" }).click();
   await page
-    .getByRole("button", { name: "Viewing & Pickup Information", exact: true })
+    .getByRole("button", { name: "Delivery Options", exact: true })
     .click();
   await expect(
-    page.getByText(defaults.policies.viewing!, { exact: true }),
+    page.getByText(defaults.policies.delivery!, { exact: true }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Product Description", exact: true })
@@ -310,18 +396,21 @@ test("published-only details, actual specifications, galleries, zoom, accordions
     page.locator(".accordion-content").filter({ hasText: "Second paragraph." }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Ask About This Item", exact: true })
+    .getByRole("button", { name: "INQUIRE ON THIS ITEM", exact: false })
     .click();
-  await page.getByLabel("Full name", { exact: true }).fill("Inline Customer");
   await page
-    .getByLabel("Email or contact number")
+    .getByLabel("Customer name", { exact: true })
+    .fill("Inline Customer");
+  await page
+    .getByLabel("Email address", { exact: true })
     .fill("inline@example.invalid");
+  await page.getByLabel("Contact number", { exact: true }).fill("09171234567");
   await page
-    .getByLabel("Message", { exact: true })
+    .getByLabel("Message / questions", { exact: true })
     .fill("Please tell me more about this ring.");
-  await page.getByRole("button", { name: "Send product inquiry" }).click();
+  await page.getByRole("button", { name: "Send inquiry", exact: false }).click();
   await expect(
-    page.getByText("Thank you. Your inquiry has been received."),
+    page.getByText("Your inquiry has been received."),
   ).toBeVisible();
   expect(
     await database.inquiry.count({
@@ -332,14 +421,78 @@ test("published-only details, actual specifications, galleries, zoom, accordions
     `${base}/products/test-solitaire`,
   );
   await expect(
-    page.getByRole("link", { name: "Contact on Instagram" }),
+    page.getByRole("link", { name: /Send on Instagram/ }),
   ).toHaveAttribute("href", defaults.instagram);
   await expect(
-    page.getByRole("link", { name: "Contact on Facebook" }),
+    page.getByRole("link", { name: /Send on Facebook/ }),
   ).toHaveAttribute("href", defaults.facebook);
   expect(
     (await anon.get("/shop/test-solitaire", { maxRedirects: 0 })).status(),
   ).toBe(308);
+});
+
+test("related products rank matching descriptions and carat titles first", async ({
+  page,
+}) => {
+  const created = [
+    await post(
+      "products",
+      product(
+        "1.0ct Halo Ring",
+        100000,
+        true,
+        {
+          slug: "one-ct-halo-ring",
+          description: "A 1.0ct halo ring with a natural diamond center.",
+          specifications: { carat: "1.0", metal: "Test-approved metal" },
+        },
+      ),
+    ),
+    await post(
+      "products",
+      product(
+        "1.0 ct Halo Ring",
+        105000,
+        true,
+        {
+          slug: "one-ct-halo-related",
+          description: "A 1.0 ct halo ring with a natural diamond center.",
+          specifications: { carat: "1.0", metal: "Test-approved metal" },
+        },
+      ),
+    ),
+    await post(
+      "products",
+      product(
+        "2.0ct Solitaire Ring",
+        200000,
+        true,
+        {
+          slug: "two-ct-solitaire-ring",
+          description: "A 2.0ct solitaire ring with a natural diamond center.",
+          specifications: { carat: "2.0", metal: "Test-approved metal" },
+        },
+      ),
+    ),
+  ];
+  try {
+    await page.goto(`/products/${created[0].slug}`);
+    const related = page
+      .locator("section")
+      .filter({
+        has: page.getByRole("heading", {
+          name: "You May Also Like",
+          exact: true,
+        }),
+      })
+      .locator(".product-card h3");
+    await expect(related.first()).toHaveText("1.0 ct Halo Ring");
+    expect(await related.allTextContents()).not.toContain("1.0ct Halo Ring");
+  } finally {
+    await database.product.deleteMany({
+      where: { id: { in: created.map((row) => row.id as string) } },
+    });
+  }
 });
 
 test("catalog search, derived dual range, inquiry-only pricing, sorting and reset", async ({
@@ -840,7 +993,7 @@ test("settings persistence, product policy overrides, optional sections and admi
   });
   await page.goto("/products/test-solitaire");
   await page
-    .getByRole("button", { name: "Payment Options", exact: true })
+    .getByRole("button", { name: "Payment Methods", exact: true })
     .click();
   await expect(
     page.getByText("Owner-approved test payment information.", { exact: true }),
@@ -860,7 +1013,7 @@ test("settings persistence, product policy overrides, optional sections and admi
     .getByLabel("Other Details", { exact: true })
     .fill("An owner-edited product detail.");
   await page
-    .getByLabel("Payment Options", { exact: true })
+    .getByLabel("Payment Methods", { exact: true })
     .fill("Product-specific approved payment information.");
   await page.getByRole("button", { name: "Save product", exact: true }).click();
   await expect(page.getByText("Changes saved.", { exact: true })).toBeVisible();
@@ -869,7 +1022,7 @@ test("settings persistence, product policy overrides, optional sections and admi
     page.getByText("An owner-edited product detail.", { exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Payment Options", exact: true })
+    .getByRole("button", { name: "Payment Methods", exact: true })
     .click();
   await expect(
     page.getByText("Product-specific approved payment information.", {
@@ -932,7 +1085,29 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
     }
   }
   await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: /Timeless Sparkle\. Made to Be Yours/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Find your Sparkle", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Handpicked Favorites", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Open menu" }).click();
+  expect(
+    await page.locator("nav").getByRole("link").allTextContents(),
+  ).toEqual([
+    "Home",
+    "Showroom",
+    "Live Selling",
+    "Customization",
+    "Book a Viewing",
+    "Reels",
+    "Stories of Sparkle",
+    "About",
+    "Contact",
+  ]);
   await page
     .locator("nav")
     .getByRole("link", { name: "Live Selling", exact: true })
@@ -941,6 +1116,7 @@ test("production text, mobile layouts, navigation and published-only sitemap", a
   const sitemap = await anon.get("/sitemap.xml");
   expect(await sitemap.text()).toContain("/showroom");
   expect(await sitemap.text()).not.toContain("/shop");
+  expect(await sitemap.text()).toContain("/stories-of-sparkle");
   expect(await sitemap.text()).toContain("/products/test-solitaire");
   expect(await sitemap.text()).not.toContain("private-draft-ring");
 });
@@ -1098,9 +1274,7 @@ test("unsupported upload contents and forged attachment tokens are rejected", as
   ).toBe(0);
 });
 
-test("certificate details are optional and authenticity claims require approved text", async ({
-  page,
-}) => {
+test("certificate details are optional and authenticity claims require approved text", async () => {
   const file = await upload(
     admin,
     "certificate",
@@ -1115,14 +1289,20 @@ test("certificate details are optional and authenticity claims require approved 
     certificateNumber: "TEST-123",
   };
   await post("products", payload);
-  await page.goto("/products/test-solitaire");
-  await expect(
-    page.getByRole("heading", { name: "Certificate information" }),
-  ).toBeVisible();
-  await expect(page.getByText("TEST-123", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "View certificate" }),
-  ).toHaveAttribute("href", `/api/media/${file.assetId}`);
+  const saved = (await (await admin.get("/api/admin/data")).json()).products.find(
+    (item: { id: string }) => item.id === productId,
+  );
+  expect(saved).toEqual(
+    expect.objectContaining({
+      certificateType: "Test-only certificate",
+      certificateNumber: "TEST-123",
+      certificateIssuer: "Test Issuer",
+      certificateId: file.assetId,
+    }),
+  );
+  const printed = await (await admin.get(`/admin/print?ids=${productId}`)).text();
+  expect(printed).toContain("Authenticity and certificate");
+  expect(printed).toContain("TEST-123");
   const invalid = await admin.post("/api/admin/products", {
     data: { ...payload, authenticityEnabled: true, authenticityText: "" },
   });
@@ -1132,12 +1312,10 @@ test("certificate details are optional and authenticity claims require approved 
     authenticityEnabled: true,
     authenticityText: "Owner-approved test-only authenticity statement.",
   });
-  await page.reload();
-  await expect(
-    page.getByText("Owner-approved test-only authenticity statement.", {
-      exact: true,
-    }),
-  ).toBeVisible();
+  const finalPrint = await (await admin.get(`/admin/print?ids=${productId}`)).text();
+  expect(finalPrint).toContain(
+    "Owner-approved test-only authenticity statement.",
+  );
 });
 
 test("archiving removes a product from details and shared public listings", async ({

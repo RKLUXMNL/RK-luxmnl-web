@@ -8,7 +8,13 @@ import {
   passwordHash,
   requireAdmin,
 } from "@/lib/security";
-import { productSchema, liveSchema, reelSchema, id } from "@/lib/validation";
+import {
+  productSchema,
+  liveSchema,
+  reelSchema,
+  storySchema,
+  id,
+} from "@/lib/validation";
 import { getSettings, settingsSchema } from "@/lib/settings";
 import { productInclude } from "@/lib/catalog";
 import { manilaDate } from "@/lib/manila";
@@ -66,6 +72,7 @@ export async function GET(req: Request, { params }: Context) {
       blocked,
       sessions,
       reels,
+      stories,
       assets,
       settings,
       counts,
@@ -123,6 +130,11 @@ export async function GET(req: Request, { params }: Context) {
         take,
         skip,
       }),
+      db.sparkleStory.findMany({
+        orderBy: { createdAt: "desc" },
+        take,
+        skip,
+      }),
       db.mediaAsset.findMany({
         select: {
           id: true,
@@ -162,6 +174,7 @@ export async function GET(req: Request, { params }: Context) {
         slots,
         sessions,
         reels,
+        stories,
         assets,
       ].some((rows) => rows.length === take),
       products: products.map((p) => ({
@@ -176,6 +189,7 @@ export async function GET(req: Request, { params }: Context) {
       blocked,
       sessions,
       reels,
+      stories,
       assets,
       settings,
       counts,
@@ -412,6 +426,14 @@ export async function POST(req: Request, { params }: Context) {
           });
           return row;
         }),
+      );
+    }
+    if (resource === "stories") {
+      const data = storySchema.parse(raw);
+      return json(
+        recordId
+          ? await db.sparkleStory.update({ where: { id: recordId }, data })
+          : await db.sparkleStory.create({ data }),
       );
     }
     if (resource === "inquiries") {
@@ -707,6 +729,8 @@ export async function DELETE(req: Request, { params }: Context) {
       await db.liveSellingSession.delete({ where: { id: input.id } });
     else if (resource === "reels")
       await db.reel.delete({ where: { id: input.id } });
+    else if (resource === "stories")
+      await db.sparkleStory.delete({ where: { id: input.id } });
     else if (resource === "blocked")
       await db.blockedDate.delete({ where: { date: input.id } });
     else if (resource === "slots")

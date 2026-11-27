@@ -49,10 +49,18 @@ export function productSearchWhere(query: string): Prisma.ProductWhereInput {
             },
           },
           ...specificationKeys.map((key) => ({
-            specifications: { path: [key], string_contains: term },
+            specifications: {
+              path: [key],
+              string_contains: term,
+              mode: "insensitive" as const,
+            },
           })),
           ...policyKeys.map((key) => ({
-            policies: { path: [key], string_contains: term },
+            policies: {
+              path: [key],
+              string_contains: term,
+              mode: "insensitive" as const,
+            },
           })),
           ...(amount === null
             ? []

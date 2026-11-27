@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { db } from "@/lib/db";
-import { productDto, productInclude, publishedProduct } from "@/lib/catalog";
+import { publishedProduct } from "@/lib/catalog";
+import { relatedProducts } from "@/lib/product-recommendations";
 import { ProductDetails } from "@/components/product-detail";
-import { publicProductWhere } from "@/lib/public-products";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   params,
@@ -39,29 +38,7 @@ export default async function Page({
   const { slug } = await params;
   const product = await publishedProduct(slug);
   if (!product) notFound();
-  const related = (
-    await db.product.findMany({
-      where: {
-        ...publicProductWhere(),
-        AND: [
-          {
-            OR: [
-              {
-                productCategories: {
-                  some: { categoryId: { in: product.categoryIds } },
-                },
-              },
-              { categoryId: product.categoryId },
-            ],
-          },
-        ],
-        id: { not: product.id },
-      },
-      include: productInclude,
-      take: 4,
-      orderBy: { createdAt: "desc" },
-    })
-  ).map(productDto);
+  const related = await relatedProducts(product);
   const base = process.env.APP_URL || "http://localhost:3001";
   const structured = {
     "@context": "https://schema.org",

@@ -79,6 +79,16 @@ Four-hour recordings need sufficient Cloudflare storage capacity and a file with
 
 Disable downloads to prevent new download links. Already issued short-lived file links expire within five minutes. Unpublishing the Reel removes public access to new links and playback authorization.
 
+## Stories of Sparkle
+
+1. Open **Stories of Sparkle → Add story**.
+2. Enter the client's name, select **Instagram** or **Facebook**, and paste the exact feedback they approved for publication.
+3. Optionally add the original post URL. Instagram stories accept an `instagram.com` HTTPS URL; Facebook stories accept a `facebook.com` or `fb.com` HTTPS URL. A mismatched platform link is rejected.
+4. Save as an unpublished draft until the name, wording and source link are correct. Enable **Publish on Stories of Sparkle** only after approval.
+5. Published feedback appears on the public `/stories-of-sparkle` page in newest-first order. Unpublishing immediately removes it from that page.
+
+Do not publish private customer details or feedback without permission. Editing an existing story updates the same public record; deleting removes it permanently.
+
 ## Media library
 
 See uploaded files and processing states, preview ready recordings, check Stream processing and delete unused files. To replace media, upload the new file, select it in the corresponding product/session/Reel, save, then delete the detached old file. Referenced files and the current business logo cannot be deleted until detached. Deletion removes stored originals and generated image variants permanently.

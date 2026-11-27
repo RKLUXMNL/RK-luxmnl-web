@@ -110,6 +110,25 @@ export const reelSchema = z.object({
   assetId: id.nullable(),
   productIds: z.array(id).max(100),
 });
+export const storySchema = z
+  .object({
+    customerName: short.min(1),
+    platform: z.enum(["Instagram", "Facebook"]),
+    message: long.min(1),
+    sourceUrl: z.string().trim().max(2000).default(""),
+    published: z.boolean(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.sourceUrl) return;
+    const check =
+      value.platform === "Instagram" ? instagramUrl : facebookUrl;
+    if (!check.safeParse(value.sourceUrl).success)
+      ctx.addIssue({
+        code: "custom",
+        path: ["sourceUrl"],
+        message: `Use a valid ${value.platform} HTTPS URL`,
+      });
+  });
 export const contactSchema = z
   .object({
     name: short.min(2),

@@ -17,10 +17,11 @@ import { useStore } from "./store";
 const links = [
   ["Home", "/"],
   ["Showroom", "/showroom"],
+  ["Live Selling", "/live-selling"],
   ["Customization", "/customization"],
   ["Book a Viewing", "/book-a-viewing"],
-  ["Live Selling", "/live-selling"],
   ["Reels", "/reels"],
+  ["Stories of Sparkle", "/stories-of-sparkle"],
   ["About", "/about"],
   ["Contact", "/contact"],
 ];

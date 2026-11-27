@@ -55,6 +55,7 @@ Migrations:
 3. `20261120035831_optimized_media`: WebP derivative references and image dimensions.
 4. `20261120042713_production_indexes`: media/relation/maintenance lookup indexes.
 5. `20261120053810_demo_catalog`: explicit demo-record classification for optional local test inventory.
+6. `20261127000000_sparkle_stories`: published client feedback with platform and optional source URL.
 
 Restart development after regenerating Prisma Client to avoid a stale client in the hot-reload process.
 
@@ -90,7 +91,9 @@ Sign in at **`/admin/login`**. **`/admin`** and all administrative APIs validate
 - Customization requests store private, persistent reference images. Public attachment capabilities are scoped, expire and are consumed on submission.
 - `/live-selling`: Manila-date calendar, scheduled/live/completed/cancelled states, live Instagram and/or Facebook redirects, ready-only recording playback and shared featured jewelry records with optional seek timestamps.
 - `/reels`: Instagram URL entries, uploaded original videos, linked products, and explicit download permission. No Instagram scraping or arbitrary Reel downloading.
-- Administration: real overview counts, product publication/archive, categories, request search/statuses, slot/date management, live sessions, Reels, ordered media, certificates, website contacts/logo and approved policies. Load more retrieves older management records.
+- `/stories-of-sparkle`: published client feedback from Instagram or Facebook with an optional link to the original post. Draft stories stay private.
+- Related products are ranked by title, description, category, specifications, price proximity and carat title matches rather than showing only recent products in the same category.
+- Administration: real overview counts, product publication/archive, categories, request search/statuses, slot/date management, live sessions, Reels, Stories of Sparkle, ordered media, certificates, website contacts/logo and approved policies. Load more retrieves older management records.
 - Canonical product SEO, valid optional Product/Offer structured data, sitemap, robots and Google verification support. Private routes and APIs have indexing restrictions.
 
 ## Storage setup

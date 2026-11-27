@@ -89,11 +89,9 @@ export function Home() {
         <Reveal className="hero-copy">
           <span className="eyebrow">NATURAL DIAMONDS & GEMS</span>
           <h1>
-            Timeless Jewelry
+            Timeless Sparkle.
             <br />
-            for Life’s
-            <br />
-            <em>Special Moments</em>
+            <em>Made to Be Yours</em>
           </h1>
           <div className="fine-line" />
           <p>
@@ -141,7 +139,7 @@ export function Home() {
       <section className="section categories-section">
         <Heading
           eyebrow="FIND YOUR SIGNATURE"
-          title="Explore by Category"
+          title="Find your Sparkle"
           text="Little luxuries. Meaningful milestones. Find the piece that speaks to you."
         />
         <div className="category-grid">
@@ -179,7 +177,7 @@ export function Home() {
       <section className="section featured">
         <Heading
           eyebrow="THE CONSIDERED COLLECTION"
-          title="Featured Collection"
+          title="Handpicked Favorites"
           text="Discover our published selection, thoughtfully chosen for your meaningful moments."
         />
         {showroomProducts.length ? (

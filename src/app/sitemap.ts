@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       "/contact",
       "/live-selling",
       "/reels",
+      "/stories-of-sparkle",
     ].map((path) => ({
       url: `${base}${path}`,
       changeFrequency: "weekly" as const,

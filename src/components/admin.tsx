@@ -89,6 +89,15 @@ type ReelRow = {
   downloadsEnabled: boolean;
   products: { productId: string }[];
 };
+type StoryRow = {
+  id: string;
+  customerName: string;
+  platform: "Instagram" | "Facebook";
+  message: string;
+  sourceUrl: string;
+  published: boolean;
+  createdAt: string;
+};
 type RequestRow = {
   id: string;
   name: string;
@@ -120,6 +129,7 @@ type Data = {
   assets: Asset[];
   sessions: SessionRow[];
   reels: ReelRow[];
+  stories: StoryRow[];
   settings: Settings;
   slots: { id: string; startsAt: string; capacity: number; enabled: boolean }[];
   blocked: { date: string; reason: string }[];
@@ -219,7 +229,9 @@ function ProductEditor({
           const payload = {
             id: value?.id,
             name: fields.name,
-            slug: value?.slug || slugify(fields.name),
+            slug: fields.slug
+              ? slugify(fields.slug)
+              : value?.slug || slugify(fields.name),
             categoryId: fields.categoryId,
             categoryIds,
             price: fields.price === "" ? null : Number(fields.price),
@@ -259,6 +271,17 @@ function ProductEditor({
                 required
                 maxLength={200}
                 defaultValue={value?.name}
+              />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              URL slug
+              <input
+                name="slug"
+                maxLength={200}
+                placeholder="Generated from the product name"
+                defaultValue={value?.slug || ""}
               />
             </label>
           </div>
@@ -774,6 +797,98 @@ function ContentEditor({
     </section>
   );
 }
+function StoryEditor({
+  value,
+  onSave,
+  onClose,
+}: {
+  value: StoryRow | null;
+  onSave: (resource: string, payload: unknown) => Promise<boolean>;
+  onClose: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <section className="admin-editor">
+      <div className="admin-title">
+        <h2>{value ? "Edit story" : "Add story"}</h2>
+        <button aria-label="Close story editor" onClick={onClose}>
+          <X />
+        </button>
+      </div>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          const fields = Object.fromEntries(
+            new FormData(e.currentTarget),
+          ) as Record<string, string>;
+          const ok = await onSave("stories", {
+            id: value?.id,
+            customerName: fields.customerName,
+            platform:
+              fields.platform === "Facebook" ? "Facebook" : "Instagram",
+            message: fields.message,
+            sourceUrl: fields.sourceUrl,
+            published: fields.published === "on",
+          });
+          if (ok) onClose();
+          setBusy(false);
+        }}
+      >
+        <label>
+          Customer name
+          <input
+            name="customerName"
+            required
+            defaultValue={value?.customerName}
+            placeholder="Client name or handle"
+          />
+        </label>
+        <label>
+          Platform
+          <select
+            aria-label="Platform"
+            name="platform"
+            defaultValue={value?.platform || "Instagram"}
+          >
+            <option>Instagram</option>
+            <option>Facebook</option>
+          </select>
+        </label>
+        <label>
+          Feedback message
+          <textarea
+            name="message"
+            required
+            rows={6}
+            defaultValue={value?.message}
+            placeholder="Paste the client’s approved message"
+          />
+        </label>
+        <label>
+          Source post URL (optional)
+          <input
+            name="sourceUrl"
+            type="url"
+            defaultValue={value?.sourceUrl}
+            placeholder="https://www.instagram.com/…"
+          />
+        </label>
+        <label className="check-label">
+          <input
+            type="checkbox"
+            name="published"
+            defaultChecked={value?.published}
+          />{" "}
+          Publish on Stories of Sparkle
+        </label>
+        <button className="btn" disabled={busy}>
+          {busy ? "Saving…" : "Save story"}
+        </button>
+      </form>
+    </section>
+  );
+}
 export function Admin() {
   const router = useRouter();
   const [data, setData] = useState<Data | null>(null),
@@ -791,6 +906,7 @@ export function Admin() {
     [contentEdit, setContentEdit] = useState<
       SessionRow | ReelRow | null | undefined
     >(undefined),
+    [storyEdit, setStoryEdit] = useState<StoryRow | null | undefined>(undefined),
     [adminForm, setAdminForm] = useState(false);
   async function refresh(q = search, productQ = productQuery) {
     try {
@@ -851,6 +967,7 @@ export function Admin() {
     "Customization",
     "Live Selling",
     "Reels",
+    "Stories of Sparkle",
     "Media Library",
     "Website Settings",
     ...(data?.viewer.role === "OWNER" ? ["Administrators"] : []),
@@ -878,6 +995,7 @@ export function Admin() {
               setTab(name);
               setProductEdit(undefined);
               setContentEdit(undefined);
+              setStoryEdit(undefined);
               setFeedback("");
               setAdminForm(false);
             }}
@@ -905,7 +1023,9 @@ export function Admin() {
             <span className="eyebrow">YOUR BUSINESS, AT A GLANCE</span>
             <h1>{tab}</h1>
           </div>
-          {["Products", "Live Selling", "Reels"].includes(tab) && (
+          {["Products", "Live Selling", "Reels", "Stories of Sparkle"].includes(
+            tab,
+          ) && (
             <div className="admin-title-actions">
               {tab === "Products" && (
                 <select
@@ -919,18 +1039,20 @@ export function Admin() {
               )}
               <button
                 className="btn"
-                onClick={() =>
-                  tab === "Products"
-                    ? setProductEdit(null)
-                    : setContentEdit(null)
-                }
+                onClick={() => {
+                  if (tab === "Products") setProductEdit(null);
+                  else if (tab === "Stories of Sparkle") setStoryEdit(null);
+                  else setContentEdit(null);
+                }}
               >
                 <Plus size={16} /> Add{" "}
                 {tab === "Products"
                   ? "product"
                   : tab === "Reels"
                     ? "Reel"
-                    : "session"}
+                    : tab === "Stories of Sparkle"
+                      ? "story"
+                      : "session"}
               </button>
             </div>
           )}
@@ -1509,6 +1631,76 @@ export function Admin() {
                 </div>
               </>
             )}
+            {tab === "Stories of Sparkle" && (
+              <>
+                {storyEdit !== undefined && (
+                  <StoryEditor
+                    key={storyEdit?.id || "new"}
+                    value={storyEdit}
+                    onSave={save}
+                    onClose={() => setStoryEdit(undefined)}
+                  />
+                )}
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Feedback</th>
+                        <th>Publication</th>
+                        <th>Source</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.stories.map((row) => (
+                        <tr key={row.id}>
+                          <td data-label="Customer">
+                            {row.customerName}
+                            <p>{row.platform}</p>
+                          </td>
+                          <td data-label="Feedback">{row.message}</td>
+                          <td data-label="Publication">
+                            {row.published ? "Published" : "Unpublished"}
+                          </td>
+                          <td data-label="Source">
+                            {row.sourceUrl ? (
+                              <a
+                                href={row.sourceUrl}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                View post
+                              </a>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td data-label="Actions">
+                            <div className="button-row">
+                              <button
+                                className="text-link"
+                                onClick={() => setStoryEdit(row)}
+                              >
+                                Edit {row.customerName}
+                              </button>
+                              <button
+                                aria-label={`Delete ${row.customerName} story`}
+                                onClick={() =>
+                                  void remove("stories", row.id)
+                                }
+                              >
+                                <Trash2 size={17} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
             {tab === "Media Library" && (
               <>
                 <p className="small">
@@ -1842,6 +2034,7 @@ export function Admin() {
                       slots: merge(data.slots, next.slots),
                       sessions: merge(data.sessions, next.sessions),
                       reels: merge(data.reels, next.reels),
+                      stories: merge(data.stories, next.stories),
                       assets: merge(data.assets, next.assets),
                     });
                   } catch (e) {
