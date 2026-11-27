@@ -69,6 +69,7 @@ Subsequent testing update: at the owner's request, the original eight demo produ
 - `src/components/product-detail.tsx`, `admin.tsx`, `uploads.tsx`, `live.tsx`, `video.tsx`, `forms.tsx`, `login.tsx`; existing storefront, forms, shell and theme components adapted to shared database records.
 - `scripts/admin.ts`, `scripts/seed.ts`, `scripts/maintenance.ts`, package/dependency configuration, `.env.example`, Playwright configuration and `tests/production.spec.ts`.
 - `README.md`, `IMPLEMENTATION.md`, `docs/ADMIN_GUIDE.md`, `docs/DEPLOYMENT.md`, this report.
+- Dated live-session preview photos and native video trailers are private until publication, reject mismatched or unfinished assets, and appear with the session title after selecting the calendar date.
 
 ## Multiple-media gallery upgrade
 

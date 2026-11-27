@@ -143,7 +143,15 @@ export async function POST(req: Request) {
         (await db.product.count({ where: { certificateId: asset.id } })) +
         (await db.customReference.count({ where: { assetId: asset.id } })) +
         (await db.reel.count({ where: { assetId: asset.id } })) +
-        (await db.liveSellingSession.count({ where: { replayId: asset.id } }));
+        (await db.liveSellingSession.count({
+          where: {
+            OR: [
+              { replayId: asset.id },
+              { thumbnailId: asset.id },
+              { trailerId: asset.id },
+            ],
+          },
+        }));
       if (attached)
         throw new HttpError(
           409,

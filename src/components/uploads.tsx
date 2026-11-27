@@ -13,10 +13,14 @@ type UploadResult = {
 export function UploadControl({
   purpose,
   provider = "object",
+  label,
+  accept,
   onComplete,
 }: {
   purpose: "product" | "custom" | "certificate" | "reel" | "live" | "branding";
   provider?: "object" | "stream";
+  label?: string;
+  accept?: string;
   onComplete: (id: string, token?: string) => void;
 }) {
   const [progress, setProgress] = useState(0),
@@ -144,18 +148,22 @@ export function UploadControl({
   return (
     <div className="upload-box">
       <label>
-        {provider === "stream" ? "Upload recording (resumable)" : "Upload file"}
+        {label ||
+          (provider === "stream"
+            ? "Upload recording (resumable)"
+            : "Upload file")}
         <input
           type="file"
           disabled={active}
           accept={
-            provider === "stream" || purpose === "reel"
+            accept ||
+            (provider === "stream" || purpose === "reel"
               ? "video/mp4,video/webm"
               : purpose === "custom" || purpose === "branding"
                 ? "image/jpeg,image/png,image/webp"
                 : purpose === "certificate"
                   ? "image/jpeg,image/png,image/webp,application/pdf"
-                  : "image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                  : "image/jpeg,image/png,image/webp,video/mp4,video/webm")
           }
           onChange={(e) => {
             const selected = e.target.files?.[0] || null;

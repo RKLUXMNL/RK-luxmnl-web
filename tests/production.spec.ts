@@ -25,6 +25,11 @@ let admin: APIRequestContext,
   draftStoryId: string,
   images: string[];
 type Upload = { assetId: string; token: string; url: string };
+type SharedPayload = {
+  text?: string;
+  title?: string;
+  files?: { name: string; type: string; size: number }[];
+};
 async function post(resource: string, data: unknown) {
   const result = await admin.post(`/api/admin/${resource}`, { data });
   expect(result.ok(), await result.text()).toBeTruthy();
@@ -576,6 +581,18 @@ test("persistent inquiries, idempotency, validation, social contact and admin st
   };
   const first = await anon.post("/api/requests/inquiry", { data });
   expect(first.status()).toBe(201);
+  const short = await anon.post("/api/requests/inquiry", {
+    data: {
+      ...data,
+      submissionKey: randomUUID(),
+      message: "How much is this?",
+    },
+  });
+  expect(short.status()).toBe(201);
+  const empty = await anon.post("/api/requests/inquiry", {
+    data: { ...data, submissionKey: randomUUID(), message: "   " },
+  });
+  expect(empty.status()).toBe(400);
   const second = await anon.post("/api/requests/inquiry", { data });
   expect(second.status()).toBe(200);
   expect((await first.json()).id).toBe((await second.json()).id);
@@ -594,6 +611,30 @@ test("persistent inquiries, idempotency, validation, social contact and admin st
       })
     ).status(),
   ).toBe(400);
+  await page.addInitScript(() => {
+    (window as Window & { __sharedPayloads?: unknown[] }).__sharedPayloads = [];
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: (data: ShareData) => Boolean(data.files?.length || data.text),
+    });
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: (data: ShareData) => {
+        (
+          window as Window & { __sharedPayloads?: unknown[] }
+        ).__sharedPayloads?.push({
+          text: data.text,
+          title: data.title,
+          files: data.files?.map((file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          })),
+        });
+        return Promise.resolve();
+      },
+    });
+  });
   await page.goto("/products/test-solitaire");
   await page
     .getByRole("button", { name: "INQUIRE ON THIS ITEM", exact: true })
@@ -602,9 +643,7 @@ test("persistent inquiries, idempotency, validation, social contact and admin st
   await page.getByLabel("Customer name").fill("Modal Customer");
   await page.getByLabel("Email address").fill("modal@example.invalid");
   await page.getByLabel("Contact number").fill("+639171234567");
-  await page
-    .getByLabel("Message / questions")
-    .fill("I would like to arrange a personal inquiry.");
+  await page.getByLabel("Message / questions").fill("How much is this?");
   await page
     .getByRole("button", { name: "Send inquiry", exact: false })
     .click();
@@ -617,6 +656,21 @@ test("persistent inquiries, idempotency, validation, social contact and admin st
   await expect(
     page.getByRole("link", { name: "Open Facebook", exact: true }),
   ).toHaveAttribute("href", defaults.facebook);
+  const share = page.getByRole("button", { name: "Share message + photo" });
+  await expect(share).toBeVisible();
+  await share.click();
+  const shared = await page.evaluate(
+    () =>
+      (window as Window & { __sharedPayloads?: SharedPayload[] })
+        .__sharedPayloads ?? [],
+  );
+  expect(shared).toHaveLength(1);
+  expect(shared[0].text).toContain("How much is this?");
+  expect(shared[0].title).toBe("Test Solitaire inquiry");
+  expect(shared[0].files).toEqual([
+    { name: "test-solitaire.png", type: "image/png", size: shared[0].files?.[0]?.size },
+  ]);
+  expect(shared[0].files?.[0]?.size).toBeGreaterThan(0);
   const row = await database.inquiry.findFirstOrThrow({
     where: { submissionKey },
   });
@@ -625,6 +679,45 @@ test("persistent inquiries, idempotency, validation, social contact and admin st
     (await database.inquiry.findUniqueOrThrow({ where: { id: row.id } }))
       .status,
   ).toBe("Contacted");
+});
+
+test("inquiry keeps copy and social fallbacks without native sharing", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, "canShare", {
+      configurable: true,
+      value: undefined,
+    });
+  });
+  await page.goto("/products/test-solitaire");
+  await page
+    .getByRole("button", { name: "INQUIRE ON THIS ITEM", exact: true })
+    .click();
+  await page.getByLabel("Customer name").fill("Fallback Customer");
+  await page.getByLabel("Email address").fill("fallback@example.invalid");
+  await page.getByLabel("Contact number").fill("+639171234567");
+  await page.getByLabel("Message / questions").fill("Is this still available?");
+  await page
+    .getByRole("button", { name: "Send inquiry", exact: false })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Your inquiry has been received." }),
+  ).toBeVisible();
+  expect(
+    await page.getByRole("button", { name: "Share message" }).count(),
+  ).toBe(0);
+  await expect(
+    page.getByRole("button", { name: "Copy message" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy photo" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open Instagram" }),
+  ).toBeVisible();
 });
 
 test("appointment locking, pending state, cancellation release and blocked dates", async () => {
@@ -837,6 +930,149 @@ test("live calendar, Instagram and Facebook redirects, replay fallback and share
     },
   });
   expect(invalidPlatform.status()).toBe(400);
+});
+
+test("live session preview media is private until publication and shown on its calendar date", async ({
+  page,
+}) => {
+  const photo = await upload(admin, "live", await readFile("public/ring.jpg"));
+  const still =
+    await upload(admin, "live", await readFile("public/solitaire.jpg"));
+  await page.goto("/");
+  const bytes = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = "#c9973b";
+    context.fillRect(0, 0, 64, 64);
+    const stream = canvas.captureStream(5);
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    const chunks: BlobPart[] = [];
+    const done = new Promise<Blob>((resolve) => {
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => resolve(new Blob(chunks, { type: "video/webm" }));
+    });
+    recorder.start();
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    recorder.stop();
+    const video = await done;
+    stream.getTracks().forEach((track) => track.stop());
+    return Array.from(new Uint8Array(await video.arrayBuffer()));
+  });
+  const trailer = await upload(
+    admin,
+    "live",
+    Buffer.from(bytes),
+    "video/webm",
+  );
+  const startsAt = new Date(Date.now() + 10 * 86400000).toISOString();
+  const date = manilaDate(startsAt);
+  const session = {
+    title: "Preview Session",
+    startsAt,
+    description: "Published preview fixture.",
+    status: "Scheduled",
+    instagramUrl: "",
+    facebookUrl: "",
+    published: false,
+    replayId: null,
+    thumbnailId: photo.assetId,
+    trailerId: trailer.assetId,
+    products: [],
+  };
+  const draft = await post("sessions", session);
+  await post("sessions", {
+    ...session,
+    id: undefined,
+    title: "Photo Preview Session",
+    thumbnailId: still.assetId,
+    trailerId: null,
+    published: true,
+  });
+  for (const id of [photo.assetId, trailer.assetId]) {
+    expect((await anon.get(`/api/media/${id}`, { maxRedirects: 0 })).status())
+      .toBe(404);
+  }
+  const wrongKind = await admin.post("/api/admin/sessions", {
+    data: { ...session, id: undefined, thumbnailId: trailer.assetId, trailerId: photo.assetId },
+  });
+  expect(wrongKind.status()).toBe(400);
+  const processing = await database.mediaAsset.create({
+    data: {
+      provider: "object",
+      kind: "image",
+      purpose: "live",
+      key: `live-preview-processing-${randomUUID()}`,
+      filename: "processing.jpg",
+      mime: "image/jpeg",
+      bytes: BigInt(1000),
+      state: "processing",
+    },
+  });
+  const unpublishedAsset = await admin.post("/api/admin/sessions", {
+    data: {
+      ...session,
+      id: undefined,
+      published: true,
+      thumbnailId: processing.id,
+      trailerId: null,
+    },
+  });
+  expect(unpublishedAsset.status()).toBe(400);
+  await post("sessions", { ...session, id: draft.id, published: true });
+  for (const id of [photo.assetId, trailer.assetId]) {
+    expect((await anon.get(`/api/media/${id}`, { maxRedirects: 0 })).status())
+      .toBe(302);
+  }
+  expect(
+    (
+      await admin.post("/api/uploads", {
+        data: { action: "delete", id: photo.assetId },
+      })
+    ).status(),
+  ).toBe(409);
+  await page.goto("/live-selling");
+  for (let i = 0; i < 2; i++) {
+    if (await page.getByRole("button", { name: date, exact: true }).count())
+      break;
+    await page.getByRole("button", { name: "Next month" }).click();
+  }
+  await page.getByRole("button", { name: date, exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Preview Session", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Photo Preview Session" }),
+  ).toBeVisible();
+  await expect(page.locator(".live-preview video")).toHaveAttribute(
+    "src",
+    `/api/media/${trailer.assetId}`,
+  );
+  await expect(page.locator(".live-preview video")).toHaveAttribute(
+    "poster",
+    `/api/media/${photo.assetId}?w=720`,
+  );
+  await expect(page.locator(".live-preview-image")).toHaveAttribute(
+    "src",
+    `/api/media/${still.assetId}?w=720`,
+  );
+  await post("sessions", { ...session, id: draft.id, published: false });
+  expect((await anon.get(`/api/media/${photo.assetId}`, { maxRedirects: 0 })).status())
+    .toBe(404);
+  await page.reload();
+  for (let i = 0; i < 2; i++) {
+    if (await page.getByRole("button", { name: date, exact: true }).count())
+      break;
+    await page.getByRole("button", { name: "Next month" }).click();
+  }
+  await page.getByRole("button", { name: date, exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Preview Session", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Photo Preview Session" }),
+  ).toBeVisible();
 });
 
 test("authorized original Reel upload, native playback and download permission enforcement", async ({

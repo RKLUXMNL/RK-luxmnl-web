@@ -77,6 +77,8 @@ type SessionRow = {
   facebookUrl: string;
   published: boolean;
   replayId: string | null;
+  thumbnailId: string | null;
+  trailerId: string | null;
   products: { productId: string; timestamp: number | null }[];
 };
 type ReelRow = {
@@ -570,6 +572,12 @@ function ContentEditor({
   const [assetId, setAssetId] = useState(
       (value && ("replayId" in value ? value.replayId : value.assetId)) || "",
     ),
+    [thumbnailId, setThumbnailId] = useState(
+      value && "thumbnailId" in value ? value.thumbnailId || "" : "",
+    ),
+    [trailerId, setTrailerId] = useState(
+      value && "trailerId" in value ? value.trailerId || "" : "",
+    ),
     [selected, setSelected] = useState(
       value?.products.map((p) => p.productId) || [],
     ),
@@ -608,6 +616,8 @@ function ContentEditor({
                 startsAt: new Date(`${fields.startsAt}:00+08:00`).toISOString(),
                 status: fields.status,
                 replayId: assetId || null,
+                thumbnailId: thumbnailId || null,
+                trailerId: trailerId || null,
                 products: selected.map((productId) => ({
                   productId,
                   timestamp: fields[`timestamp.${productId}`]
@@ -691,6 +701,74 @@ function ContentEditor({
             />
           </label>
         )}
+        {isLive && (
+          <>
+            <UploadControl
+              purpose="live"
+              provider="object"
+              label="Upload preview image"
+              accept="image/jpeg,image/png,image/webp"
+              onComplete={async (id) => {
+                setThumbnailId(id);
+                await onRefresh();
+              }}
+            />
+            <label>
+              Preview image
+              <select
+                value={thumbnailId}
+                onChange={(e) => setThumbnailId(e.target.value)}
+              >
+                <option value="">No preview image</option>
+                {data.assets
+                  .filter(
+                    (a) =>
+                      a.purpose === "live" &&
+                      a.kind === "image" &&
+                      a.provider === "object" &&
+                      a.state === "ready",
+                  )
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.filename}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <UploadControl
+              purpose="live"
+              provider="object"
+              label="Upload video trailer"
+              accept="video/mp4,video/webm"
+              onComplete={async (id) => {
+                setTrailerId(id);
+                await onRefresh();
+              }}
+            />
+            <label>
+              Video trailer
+              <select
+                value={trailerId}
+                onChange={(e) => setTrailerId(e.target.value)}
+              >
+                <option value="">No video trailer</option>
+                {data.assets
+                  .filter(
+                    (a) =>
+                      a.purpose === "live" &&
+                      a.kind === "video" &&
+                      a.provider === "object" &&
+                      a.state === "ready",
+                  )
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.filename}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          </>
+        )}
         <UploadControl
           purpose={isLive ? "live" : "reel"}
           provider={isLive ? "stream" : "object"}
@@ -704,7 +782,11 @@ function ContentEditor({
           <select value={assetId} onChange={(e) => setAssetId(e.target.value)}>
             <option value="">No uploaded recording</option>
             {data.assets
-              .filter((a) => a.purpose === (isLive ? "live" : "reel"))
+              .filter(
+                (a) =>
+                  a.purpose === (isLive ? "live" : "reel") &&
+                  (!isLive || a.provider === "stream"),
+              )
               .map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.filename} · {a.state}
@@ -786,9 +868,10 @@ function ContentEditor({
           Publish
         </label>
         <p className="small">
-          Recordings must be ready to play before they can be published.
-          Completed sessions without a recording show a replay-unavailable
-          message.
+          Published sessions show their preview image and video trailer when
+          visitors select the date. Recordings must be ready to play before
+          publication, and completed sessions without one show a
+          replay-unavailable message.
         </p>
         <button className="btn" disabled={busy}>
           {busy ? "Saving…" : "Save content"}

@@ -5,10 +5,12 @@ export function MediaPlayer({
   assetId,
   provider,
   timestamp = 0,
+  poster,
 }: {
   assetId: string;
   provider: string;
   timestamp?: number;
+  poster?: string;
 }) {
   const [player, setPlayer] = useState(""),
     [error, setError] = useState(""),
@@ -53,6 +55,7 @@ export function MediaPlayer({
     <video
       key={`${assetId}:${timestamp}`}
       src={`/api/media/${assetId}${timestamp ? `#t=${timestamp}` : ""}`}
+      poster={poster}
       controls
       playsInline
       preload="none"

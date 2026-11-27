@@ -91,7 +91,9 @@ export const liveSchema = z.object({
   instagramUrl: instagramUrl.default(""),
   facebookUrl: facebookUrl.default(""),
   published: z.boolean(),
-  replayId: id.nullable(),
+  replayId: id.nullable().default(null),
+  thumbnailId: id.nullable().default(null),
+  trailerId: id.nullable().default(null),
   products: z
     .array(
       z.object({
@@ -150,7 +152,7 @@ export const contactSchema = z
   );
 export const inquirySchema = contactSchema.and(
   z.object({
-    message: long.min(5),
+    message: long.min(1),
     platform: z.enum(["Instagram", "Facebook", "Email"]),
     productId: id.nullable().default(null),
   }),

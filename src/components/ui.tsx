@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
-import { X, Check, Camera, Copy, ArrowUpRight } from "lucide-react";
+import { X, Check, Camera, Copy, ArrowUpRight, Share2 } from "lucide-react";
 import type { Product } from "@/lib/data";
 import { useStore } from "./store";
 import { SpamField, useSubmit } from "./forms";
@@ -159,8 +159,11 @@ export function Inquiry({
   const [message, setMessage] = useState(""),
     [copiedMessage, setCopiedMessage] = useState(false),
     [copiedPhoto, setCopiedPhoto] = useState(false),
-    [copyError, setCopyError] = useState("");
+    [copyError, setCopyError] = useState(""),
+    [shareMode, setShareMode] = useState<"photo" | "text" | null>(null),
+    [shareError, setShareError] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
+  const shareFile = useRef<File | null>(null);
   useEffect(() => {
     dialog.current?.showModal();
     const old = document.body.style.overflow;
@@ -169,6 +172,63 @@ export function Inquiry({
       document.body.style.overflow = old;
     };
   }, []);
+  useEffect(() => {
+    if (
+      !success ||
+      typeof navigator === "undefined" ||
+      !navigator.share ||
+      !navigator.canShare
+    )
+      return;
+    let active = true;
+    void (async () => {
+      try {
+        const png = await productImagePng(product?.images[0]);
+        if (!active) return;
+        const file = png
+          ? new File([png], `${product?.slug || "product"}.png`, {
+              type: "image/png",
+            })
+          : null;
+        const title = `${product?.name || "Jewelry"} inquiry`;
+        if (file && navigator.canShare({ files: [file], text: message, title })) {
+          shareFile.current = file;
+          setShareMode("photo");
+          return;
+        }
+        if (navigator.canShare({ text: message, title })) {
+          shareFile.current = null;
+          setShareMode("text");
+        }
+      } catch {
+        if (active) setShareMode(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [success, message, product]);
+  function shareInquiry() {
+    if (!shareMode) return;
+    setShareError("");
+    const title = `${product?.name || "Jewelry"} inquiry`;
+    const data: ShareData =
+      shareMode === "photo" && shareFile.current
+        ? { files: [shareFile.current], text: message, title }
+        : { text: message, title };
+    try {
+      if (!navigator.canShare(data)) {
+        setShareError("Sharing is unavailable here. Copy the message and photo instead.");
+        return;
+      }
+      void navigator.share(data).catch((e: unknown) => {
+        if ((e as DOMException).name !== "AbortError")
+          setShareError("Sharing was cancelled or unavailable. Copy the message and photo instead.");
+      });
+    } catch {
+      setShareError("Sharing is unavailable here. Copy the message and photo instead.");
+    }
+  }
   async function copyMessage() {
     try {
       await navigator.clipboard.writeText(message);
@@ -212,11 +272,20 @@ export function Inquiry({
             </div>
             <h2>Your inquiry has been received.</h2>
             <p>
-              Your request is saved with RK Luxmnl. Copy the message, then copy
-              the photo, and paste both into a direct message. No social-media
-              DM has been sent automatically.
+              Your request is saved with RK Luxmnl. On supported phones, share
+              the message and product photo together, or copy them and paste
+              both into a direct message. No social-media DM has been sent
+              automatically.
             </p>
             <pre className="message-preview">{message}</pre>
+            {shareMode && (
+              <button className="btn full" onClick={shareInquiry}>
+                <Share2 size={16} />
+                {shareMode === "photo"
+                  ? "Share message + photo"
+                  : "Share message"}
+              </button>
+            )}
             <div className="button-row">
               <button className="btn" onClick={() => void copyMessage()}>
                 <Copy size={16} />
@@ -247,7 +316,9 @@ export function Inquiry({
                 </a>
               )}
             </div>
-            {copyError && <p role="status">{copyError}</p>}
+            {(copyError || shareError) && (
+              <p role="status">{copyError || shareError}</p>
+            )}
           </>
         ) : (
           <>
@@ -293,9 +364,10 @@ export function Inquiry({
                 <textarea
                   name="message"
                   required
-                  minLength={5}
+                  minLength={1}
                   maxLength={12000}
                   rows={4}
+                  placeholder="Short questions are welcome, e.g. How much is this?"
                 />
               </label>
               {error && (

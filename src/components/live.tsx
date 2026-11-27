@@ -4,7 +4,7 @@ import { Camera } from "lucide-react";
 import { DateCalendar } from "./pages";
 import { FacebookIcon } from "./facebook-icon";
 import { useStore } from "./store";
-import { Heading } from "./ui";
+import { Heading, Photo } from "./ui";
 import { ProductCard } from "./storefront";
 import { MediaPlayer } from "./video";
 import { Product } from "@/lib/data";
@@ -18,6 +18,8 @@ export type LiveSession = {
   instagramUrl: string;
   facebookUrl: string;
   replay: { id: string; provider: string } | null;
+  thumbnail: { id: string } | null;
+  trailer: { id: string; provider: string } | null;
   products: { product: Product; timestamp: number | null }[];
 };
 export type PublicReel = {
@@ -90,6 +92,26 @@ function SessionPanel({ session }: { session: LiveSession }) {
         </span>
       </div>
       <h2>{session.title}</h2>
+      {(session.trailer || session.thumbnail) && (
+        <div className="live-preview">
+          {session.trailer ? (
+            <MediaPlayer
+              assetId={session.trailer.id}
+              provider={session.trailer.provider}
+              poster={
+                session.thumbnail ? `/api/media/${session.thumbnail.id}?w=720` : undefined
+              }
+            />
+          ) : session.thumbnail ? (
+            <Photo
+              className="live-preview-image"
+              src={`/api/media/${session.thumbnail.id}?w=720`}
+              alt={`${session.title} preview`}
+              sizes="(max-width:800px) 100vw, 720px"
+            />
+          ) : null}
+        </div>
+      )}
       {session.description && (
         <p className="preserve-lines">{session.description}</p>
       )}
@@ -169,7 +191,9 @@ export function LiveSelling({
   const { settings } = useStore();
   const initial =
     sessions.find((s) => s.status === "Live Now") ||
-    sessions.find((s) => manilaDate(s.startsAt) >= manilaDate()) ||
+    [...sessions]
+      .filter((s) => manilaDate(s.startsAt) >= manilaDate())
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ||
     sessions[0];
   const [date, setDate] = useState(
     initial ? manilaDate(initial.startsAt) : manilaDate(),

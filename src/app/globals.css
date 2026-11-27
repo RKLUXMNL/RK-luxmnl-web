@@ -2994,6 +2994,20 @@ legend {
 .stream-player p {
   padding: 20px;
 }
+.live-preview {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  background: var(--champagne);
+  overflow: hidden;
+}
+.live-preview video,
+.live-preview-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  background: var(--champagne);
+}
 .reels-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

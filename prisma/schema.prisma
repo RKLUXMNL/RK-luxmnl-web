@@ -117,30 +117,32 @@ model ProductMedia {
 }
 
 model MediaAsset {
-  id              String               @id @default(cuid())
-  provider        String
-  kind            String
-  purpose         String
-  key             String               @unique
-  filename        String
-  mime            String
-  bytes           BigInt
-  state           String               @default("uploading")
-  duration        Float?
-  error           String?
-  authorized      Boolean              @default(false)
-  uploadTokenHash String?
-  uploadExpiresAt DateTime?
-  displayKey      String?
-  thumbnailKey    String?
-  width           Int?
-  height          Int?
-  createdAt       DateTime             @default(now())
-  productMedia    ProductMedia[]
-  certificates    Product[]            @relation("Certificate")
-  references      CustomReference[]
-  sessions        LiveSellingSession[]
-  reels           Reel[]
+  id                String               @id @default(cuid())
+  provider          String
+  kind              String
+  purpose           String
+  key               String               @unique
+  filename          String
+  mime              String
+  bytes             BigInt
+  state             String               @default("uploading")
+  duration          Float?
+  error             String?
+  authorized        Boolean              @default(false)
+  uploadTokenHash   String?
+  uploadExpiresAt   DateTime?
+  displayKey        String?
+  thumbnailKey      String?
+  width             Int?
+  height            Int?
+  createdAt         DateTime             @default(now())
+  productMedia      ProductMedia[]
+  certificates      Product[]            @relation("Certificate")
+  references        CustomReference[]
+  replaySessions    LiveSellingSession[] @relation("SessionReplay")
+  thumbnailSessions LiveSellingSession[] @relation("SessionThumbnail")
+  trailerSessions   LiveSellingSession[] @relation("SessionTrailer")
+  reels             Reel[]
 
   @@index([state, createdAt])
 }
@@ -236,7 +238,11 @@ model LiveSellingSession {
   facebookUrl  String        @default("")
   published    Boolean       @default(false)
   replayId     String?
-  replay       MediaAsset?   @relation(fields: [replayId], references: [id], onDelete: SetNull)
+  replay       MediaAsset?   @relation("SessionReplay", fields: [replayId], references: [id], onDelete: SetNull)
+  thumbnailId  String?
+  thumbnail    MediaAsset?   @relation("SessionThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+  trailerId    String?
+  trailer      MediaAsset?   @relation("SessionTrailer", fields: [trailerId], references: [id], onDelete: SetNull)
   products     LiveProduct[]
   createdAt    DateTime      @default(now())
 

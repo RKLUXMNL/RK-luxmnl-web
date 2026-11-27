@@ -13,6 +13,8 @@ export default async function Page() {
     where: { published: true },
     include: {
       replay: true,
+      thumbnail: true,
+      trailer: true,
       products: {
         where: { product: publicProductWhere() },
         include: { product: { include: productInclude } },
@@ -39,6 +41,12 @@ export default async function Page() {
     replay:
       row.replay?.state === "ready"
         ? { id: row.replay.id, provider: row.replay.provider }
+        : null,
+    thumbnail:
+      row.thumbnail?.state === "ready" ? { id: row.thumbnail.id } : null,
+    trailer:
+      row.trailer?.state === "ready"
+        ? { id: row.trailer.id, provider: row.trailer.provider }
         : null,
     products: row.products.map((item) => ({
       product: productDto(item.product),

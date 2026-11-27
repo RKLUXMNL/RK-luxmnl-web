@@ -357,7 +357,14 @@ export async function isMediaPublic(id: string) {
       select: { id: true },
     })) ||
     (await db.liveSellingSession.findFirst({
-      where: { published: true, status: "Completed", replayId: id },
+      where: {
+        published: true,
+        OR: [
+          { status: "Completed", replayId: id },
+          { thumbnailId: id },
+          { trailerId: id },
+        ],
+      },
       select: { id: true },
     })),
   );

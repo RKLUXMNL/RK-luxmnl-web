@@ -119,7 +119,7 @@ export async function GET(req: Request, { params }: Context) {
       }),
       db.blockedDate.findMany(),
       db.liveSellingSession.findMany({
-        include: { replay: true, products: true },
+        include: { replay: true, thumbnail: true, trailer: true, products: true },
         orderBy: { startsAt: "desc" },
         take,
         skip,
@@ -336,6 +336,27 @@ export async function POST(req: Request, { params }: Context) {
           400,
           "Each featured product can only be added once.",
         );
+      for (const [field, kind, label] of [
+        ["thumbnailId", "image", "preview image"],
+        ["trailerId", "video", "video trailer"],
+      ] as const) {
+        const assetId = data[field];
+        if (!assetId) continue;
+        const asset = await db.mediaAsset.findFirst({
+          where: {
+            id: assetId,
+            purpose: "live",
+            kind,
+            provider: "object",
+          },
+        });
+        if (!asset) throw new HttpError(400, `Select a live ${label}.`);
+        if (data.published && asset.state !== "ready")
+          throw new HttpError(
+            400,
+            `The ${label} must finish processing before publication.`,
+          );
+      }
       if (data.replayId) {
         const asset = await db.mediaAsset.findFirst({
           where: { id: data.replayId, provider: "stream", purpose: "live" },

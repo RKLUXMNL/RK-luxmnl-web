@@ -58,14 +58,15 @@ Open **Customization**, expand a request and review preferences, budget, design 
 
 1. Open **Live Selling → Add session**.
 2. Enter the title, Philippine date/time and description. Add the approved **Instagram Live URL**, the **Facebook Live URL**, or both. Leave the other URL blank when broadcasting on only one platform.
-3. Choose **Scheduled**, select any associated catalog products, and publish when the event information is ready.
-4. When broadcasting, edit it to **Live Now**. Customers see **Watch Live on Instagram**, **Watch Live on Facebook**, or both, depending on the links you saved. The website does not pretend that either platform's live video is always embeddable.
-5. After the event, change the status to **Completed**. A session can remain published without a recording and will show **Replay not available yet**.
-6. To add the replay, choose the original supported MP4/WebM file and **Upload selected file** in the session editor. The progress bar uploads directly to Cloudflare Stream, not the website server.
-7. Use Pause/Resume for interruptions. After a page reload, reselect the identical file in the same browser tab to recover an unexpired upload. If authorization expired or a processing failure is permanent, start a new upload authorization and reselect the replacement.
-8. Keep the page open until upload completes. Processing may continue afterward. The file must become **ready** before publishing it as a playable replay. **Media Library → Check processing** can refresh status.
-9. Select the ready replay, associate the products featured in that event and save. Optional timestamps are entered in **seconds**; for example 01:35:20 is 5720 seconds.
-10. Preview the public date and replay before advertising it. Featured items below the recording use the same catalog records as the shop.
+3. Optionally upload or reuse a **preview image** and/or **video trailer**. These appear with the session title when visitors select that date, but only after the session is published. Do not use private customer reference images.
+4. Choose **Scheduled**, select any associated catalog products, and publish when the event information is ready.
+5. When broadcasting, edit it to **Live Now**. Customers see **Watch Live on Instagram**, **Watch Live on Facebook**, or both, depending on the links you saved. The website does not pretend that either platform's live video is always embeddable.
+6. After the event, change the status to **Completed**. A session can remain published without a recording and will show **Replay not available yet**.
+7. To add the replay, choose the original supported MP4/WebM file and **Upload selected file** in the session editor. The progress bar uploads directly to Cloudflare Stream, not the website server.
+8. Use Pause/Resume for interruptions. After a page reload, reselect the identical file in the same browser tab to recover an unexpired upload. If authorization expired or a processing failure is permanent, start a new upload authorization and reselect the replacement.
+9. Keep the page open until upload completes. Processing may continue afterward. The file must become **ready** before publishing it as a playable replay. **Media Library → Check processing** can refresh status.
+10. Select the ready replay, associate the products featured in that event and save. Optional timestamps are entered in **seconds**; for example 01:35:20 is 5720 seconds.
+11. Preview the public date, preview media and replay before advertising it. Featured items below the recording use the same catalog records as the shop.
 
 Four-hour recordings need sufficient Cloudflare storage capacity and a file within the account's upload-size limits. Duration alone does not determine file size. Your developer must activate and verify the provider account before the first long recording. Keep your own original-file backup; Stream's encoded playback is not an exact archival copy of the uploaded original.
 
