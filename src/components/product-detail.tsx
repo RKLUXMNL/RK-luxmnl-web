@@ -1,6 +1,7 @@
 "use client";
 import { useState, ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { useMotionPreference } from "./use-motion-preference";
 import { ArrowRight, Camera, ChevronDown, Heart } from "lucide-react";
@@ -136,6 +137,13 @@ export function ProductDetails({
 }) {
   const { settings, wishlist, toggleWish } = useStore();
   const [inquiry, setInquiry] = useState(false);
+  const searchParams = useSearchParams();
+  const requestedCategory = searchParams.get("category");
+  const selectedCategory =
+    requestedCategory && p.categories.includes(requestedCategory)
+      ? requestedCategory
+      : p.category;
+  const showroomHref = `/showroom?category=${encodeURIComponent(selectedCategory)}`;
   const policies = {
     ...settings.policies,
     ...Object.fromEntries(
@@ -157,11 +165,8 @@ export function ProductDetails({
   return (
     <>
       <div className="breadcrumb">
-        <Link href="/showroom">The collection</Link> /{" "}
-        <Link href={`/showroom?category=${encodeURIComponent(p.category)}`}>
-          {p.category}
-        </Link>{" "}
-        / {p.name}
+        <Link href={showroomHref}>The collection</Link> /{" "}
+        <Link href={showroomHref}>{selectedCategory}</Link> / {p.name}
       </div>
       <section className="product-detail section">
         <div>
@@ -272,7 +277,11 @@ export function ProductDetails({
           </div>
           <div className="product-grid">
             {related.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                category={selectedCategory}
+              />
             ))}
           </div>
         </section>

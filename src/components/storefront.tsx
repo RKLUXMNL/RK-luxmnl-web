@@ -25,14 +25,25 @@ import {
 import { useStore } from "./store";
 import { Photo, Reveal, Heading, Inquiry } from "./ui";
 import { FacebookIcon } from "./facebook-icon";
-export function ProductCard({ product: p }: { product: Product }) {
+export function ProductCard({
+  product: p,
+  category,
+}: {
+  product: Product;
+  category?: string;
+}) {
   const { wishlist, toggleWish } = useStore();
   const [inquiry, setInquiry] = useState(false);
   const sale = isSaleProduct(p);
+  const detailHref = `/products/${p.slug}${
+    category && category !== "All"
+      ? `?category=${encodeURIComponent(category)}`
+      : ""
+  }`;
   return (
     <article className="product-card">
       <div className="product-photo">
-        <Link href={`/products/${p.slug}`}>
+        <Link href={detailHref}>
           <Photo src={p.images[0]} alt={p.name} />
         </Link>
         {(p.placement === "LIVE" || sale || p.isDemo) && (
@@ -57,7 +68,7 @@ export function ProductCard({ product: p }: { product: Product }) {
       </div>
       <div className="product-info">
         <span className="eyebrow">{p.category}</span>
-        <Link href={`/products/${p.slug}`}>
+        <Link href={detailHref}>
           <h3>{p.name}</h3>
         </Link>
         <p>{p.description}</p>
@@ -67,7 +78,7 @@ export function ProductCard({ product: p }: { product: Product }) {
         </div>
         <span className="small">{p.status}</span>
         <div className="card-actions">
-          <Link href={`/products/${p.slug}`}>
+          <Link href={detailHref}>
             View details <ArrowRight size={13} />
           </Link>
           <button onClick={() => setInquiry(true)}>Inquire now</button>
@@ -371,7 +382,26 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
     setCategory(params.get("category") || "All");
     if (params.has("search"))
       document.getElementById("product-search")?.focus();
+    const syncCategory = () => {
+      const next = new URLSearchParams(window.location.search).get("category");
+      setCategory(next || "All");
+    };
+    window.addEventListener("popstate", syncCategory);
+    return () => window.removeEventListener("popstate", syncCategory);
   }, []);
+  function updateCategory(name: string) {
+    const params = new URLSearchParams(window.location.search);
+    if (name === "All") params.delete("category");
+    else params.set("category", name);
+    const query = params.toString();
+    window.history.pushState(
+      null,
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}`,
+    );
+    setCategory(name);
+    setPage(1);
+  }
   useEffect(() => {
     setPage(1);
   }, [search, category, sort, priceMode, range]);
@@ -424,11 +454,11 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
   );
   function reset() {
     setSearch("");
-    setCategory("All");
     setSort("name");
     setRange(null);
     setPriceMode("all");
     setPage(1);
+    updateCategory("All");
   }
   return (
     <section className="section catalog">
@@ -478,10 +508,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
             <button
               key={name}
               className={category === name ? "selected" : ""}
-              onClick={() => {
-                setCategory(name);
-                setPage(1);
-              }}
+              onClick={() => updateCategory(name)}
             >
               {name}
             </button>
@@ -584,7 +611,7 @@ export function Catalog({ wishlistOnly = false }: { wishlistOnly?: boolean }) {
       {filtered.length ? (
         <div className="product-grid">
           {pageProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} category={category} />
           ))}
         </div>
       ) : (

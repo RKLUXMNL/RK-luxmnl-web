@@ -539,6 +539,36 @@ test("catalog search, derived dual range, inquiry-only pricing, sorting and rese
   await expect(page).toHaveURL(/products\/test-trilogy/);
 });
 
+test("showroom category persists through product links, breadcrumbs and browser back", async ({
+  page,
+}) => {
+  await page.goto("/showroom");
+  await page
+    .getByRole("button", { name: "Diamond Rings", exact: true })
+    .click();
+  await expect(page).toHaveURL(/category=Diamond/);
+  await expect(page.locator(".filter-chips button.selected")).toHaveText(
+    "Diamond Rings",
+  );
+  await page.getByRole("link", { name: "View details", exact: true }).first().click();
+  await expect(page).toHaveURL(/products\/.*category=Diamond/);
+  await page
+    .locator(".breadcrumb")
+    .getByRole("link", { name: "The collection", exact: true })
+    .click();
+  await expect(page).toHaveURL(/showroom\?category=Diamond/);
+  await expect(page.locator(".filter-chips button.selected")).toHaveText(
+    "Diamond Rings",
+  );
+  await page.getByRole("link", { name: "View details", exact: true }).first().click();
+  await expect(page).toHaveURL(/products\/.*category=Diamond/);
+  await page.goBack();
+  await expect(page).toHaveURL(/showroom\?category=Diamond/);
+  await expect(page.locator(".filter-chips button.selected")).toHaveText(
+    "Diamond Rings",
+  );
+});
+
 test("showroom search covers live products, details, prices, sale and live badges", async ({
   page,
 }) => {
